@@ -114,7 +114,7 @@
         "fact_id": { "$ref": "#/$defs/FactId" },
         "certainty": { "type": "number", "minimum": 0, "maximum": 1 },
         "source": { "type": ["string", "null"] },
-        "can_disclose": { "type": "boolean" }
+        "can_disclose": { "type": ["boolean", "integer"], "enum": [true, false, 0, 1] }
       }
     },
 
