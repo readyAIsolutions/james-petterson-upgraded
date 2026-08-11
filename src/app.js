@@ -40,15 +40,23 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
 
   // Validate a case manifest (deterministic core IP)
   app.post('/api/validate', (req, res) => {
+    const manifest = req.body?.manifest;
+    if (!manifest || typeof manifest !== 'object') {
+      return res.status(400).json({ error: 'manifest object required' });
+    }
     const { CaseValidator } = require('./case-validator');
-    const result = new CaseValidator().validate(req.body.manifest);
+    const result = new CaseValidator().validate(manifest);
     res.json(result);
   });
 
   // ---- Session API ----
   app.post('/api/sessions', (req, res) => {
     try {
-      const s = sessionService.start({ userId: req.body.userId || null, caseId: req.body.caseId });
+      const caseId = req.body?.caseId;
+      if (typeof caseId !== 'string' || !caseId.trim()) {
+        return res.status(400).json({ error: 'caseId is required' });
+      }
+      const s = sessionService.start({ userId: req.body.userId || null, caseId: caseId.trim() });
       res.status(201).json(s);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
@@ -108,19 +116,25 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
 
   // ---- Generator API ----
   app.post('/api/cases/generate', async (req, res) => {
-    const result = await caseGenerator.generateFromPremise(req.body || {});
-    if (!result.ok) return res.status(422).json({ error: 'generated case failed validation', errors: result.errors });
-    res.json({ ok: true, case: result.case });
+    try {
+      const params = req.body && typeof req.body === 'object' ? req.body : {};
+      const result = await caseGenerator.generateFromPremise(params);
+      if (!result.ok) return res.status(422).json({ error: 'generated case failed validation', errors: result.errors });
+      res.json({ ok: true, case: result.case });
+    } catch (e) {
+      res.status(500).json({ error: `generation failed: ${e.message}` });
+    }
   });
 
   // Auth
   app.use('/api', require('./routes/auth'));
 
-  // Error handler
+  // Error handler — respect err.status (e.g. body-parser 400) instead of
+  // always returning 500, so malformed JSON yields a 400 not a 500.
   // eslint-disable-next-line no-unused-vars
   app.use((err, req, res, next) => {
     console.error(err);
-    res.status(500).json({ error: 'Something went wrong!' });
+    res.status(err.status || err.statusCode || 500).json({ error: err.message || 'Something went wrong!' });
   });
 
   return app;

@@ -14,6 +14,12 @@ const GameSessionService = require('./services/game-session');
 const { NPCOrchestrator } = require('./services/npc-orchestrator');
 const { CaseGenerator } = require('./services/case-generator');
 
+// Robustness: never let an unhandled rejection crash the process. Log it and
+// keep serving — an LLM/IO hiccup must not take the whole server down.
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason instanceof Error ? reason.stack : reason);
+});
+
 // Seed reference cases on boot (idempotent).
 function seed() {
   const { id, manifest } = require('./data/case-001');
