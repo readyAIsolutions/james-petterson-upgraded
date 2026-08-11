@@ -1,0 +1,187 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-detective.nousresearch.com/schemas/case-manifest.schema.json",
+  "title": "CaseManifest",
+  "description": "The canonical, self-contained case definition for the AI detective platform. Every CaseManifest is immutable after publication and must satisfy this contract before it may ship (Truth-Before-Language).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "title",
+    "premise",
+    "description",
+    "difficulty",
+    "settings",
+    "locations",
+    "characters",
+    "facts",
+    "knowledge",
+    "events",
+    "evidence",
+    "lies",
+    "relationships"
+  ],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "premise": { "type": "string", "minLength": 1 },
+    "description": { "type": "string" },
+    "difficulty": { "enum": ["easy", "medium", "hard", "expert"] },
+    "settings": { "$ref": "#/$defs/CaseSettings" },
+    "culprit_id": { "$ref": "#/$defs/CharId" },
+
+    "locations": { "type": "array", "items": { "$ref": "#/$defs/Location" } },
+    "characters": { "type": "array", "items": { "$ref": "#/$defs/Character" } },
+    "facts": { "type": "array", "items": { "$ref": "#/$defs/Fact" } },
+    "knowledge": { "type": "array", "items": { "$ref": "#/$defs/Knowledge" } },
+    "events": { "type": "array", "items": { "$ref": "#/$defs/Event" } },
+    "evidence": { "type": "array", "items": { "$ref": "#/$defs/Evidence" } },
+    "lies": { "type": "array", "items": { "$ref": "#/$defs/Lie" } },
+    "relationships": { "type": "array", "items": { "$ref": "#/$defs/Relationship" } },
+
+    "seed": { "type": ["string", "null"] },
+    "canonical_hash": { "type": ["string", "null"] }
+  },
+
+  "$defs": {
+    "Id": { "type": "string", "minLength": 1 },
+    "CharId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `characters` (e.g. `char_marina`)."
+    },
+    "FactId": { "type": "string", "description": "A local id referencing an entry in `facts`." },
+    "EventId": { "type": "string", "description": "A local id referencing an entry in `events`." },
+    "EvidenceId": { "type": "string", "description": "A local id referencing an entry in `evidence`." },
+    "LocationId": { "type": "string", "description": "A local id referencing an entry in `locations`." },
+    "LieId": { "type": "string", "description": "A local id referencing an entry in `lies`." },
+
+    "CaseSettings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["crime_location", "weapon_location", "multi_culprit"],
+      "properties": {
+        "crime_location": { "$ref": "#/$defs/LocationId" },
+        "weapon_location": { "$ref": "#/$defs/LocationId" },
+        "multi_culprit": { "type": "boolean" },
+        "narration_style": { "type": "string" }
+      }
+    },
+
+    "Location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "$ref": "#/$defs/LocationId" },
+        "name": { "type": "string", "minLength": 1 },
+        "description": { "type": "string" },
+        "meta": { "type": "object" }
+      }
+    },
+
+    "Character": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "role", "is_culprit"],
+      "properties": {
+        "id": { "$ref": "#/$defs/CharId" },
+        "slug": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "role": { "$ref": "#/$defs/CharacterRole" },
+        "motive": { "type": ["string", "null"] },
+        "traits": { "type": "object" },
+        "public_profile": { "type": ["string", "null"] },
+        "is_culprit": { "type": "boolean" }
+      }
+    },
+
+    "Fact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "value", "category", "visibility"],
+      "properties": {
+        "id": { "$ref": "#/$defs/FactId" },
+        "value": { "type": "string", "minLength": 1 },
+        "category": { "$ref": "#/$defs/FactCategory" },
+        "visibility": { "enum": ["public", "secret", "hidden"] }
+      }
+    },
+
+    "Knowledge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["character_id", "fact_id"],
+      "properties": {
+        "character_id": { "$ref": "#/$defs/CharId" },
+        "fact_id": { "$ref": "#/$defs/FactId" },
+        "certainty": { "type": "number", "minimum": 0, "maximum": 1 },
+        "source": { "type": ["string", "null"] },
+        "can_disclose": { "type": "boolean" }
+      }
+    },
+
+    "Event": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "start"],
+      "properties": {
+        "id": { "$ref": "#/$defs/EventId" },
+        "start": { "type": "string", "minLength": 1 },
+        "end": { "type": ["string", "null"] },
+        "location_id": { "type": ["string", "null"] },
+        "title": { "type": ["string", "null"] },
+        "description": { "type": ["string", "null"] },
+        "actors": { "type": "array", "items": { "$ref": "#/$defs/CharId" } },
+        "causal_parent": { "type": ["string", "null"] },
+        "is_public": { "type": "boolean" }
+      }
+    },
+
+    "Evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "title"],
+      "properties": {
+        "id": { "$ref": "#/$defs/EvidenceId" },
+        "type": { "$ref": "#/$defs/EvidenceType" },
+        "location_id": { "type": ["string", "null"] },
+        "title": { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "fact_links": { "type": "array", "items": { "$ref": "#/$defs/FactId" } },
+        "unlock_rules": { "type": "object" },
+        "meta": { "type": "object" }
+      }
+    },
+
+    "Lie": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "character_id", "cover_story"],
+      "properties": {
+        "id": { "$ref": "#/$defs/LieId" },
+        "character_id": { "$ref": "#/$defs/CharId" },
+        "fact_id": { "type": ["string", "null"] },
+        "cover_story": { "type": "string", "minLength": 1 },
+        "triggers": { "type": "array", "items": { "$ref": "#/$defs/EvidenceId" } },
+        "break_conditions": { "type": "object" },
+        "active": { "type": "boolean" }
+      }
+    },
+
+    "Relationship": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "target", "type"],
+      "properties": {
+        "source": { "$ref": "#/$defs/CharId" },
+        "target": { "$ref": "#/$defs/CharId" },
+        "type": { "type": "string", "minLength": 1 },
+        "strength": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+
+    "CharacterRole": { "enum": ["victim", "suspect", "witness"] },
+    "FactCategory": {
+      "enum": ["critical", "conclusion", "alibi", "forensic", "relationship", "access", "motive_support", "general"]
+    },
+    "EvidenceType": { "enum": ["physical", "document", "digital", "testimony", "audio"] }
+  }
+}

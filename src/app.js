@@ -5,10 +5,16 @@
  * against an isolated in-memory DB.
  */
 const express = require('express');
+const { optionalAuth, requireAuth, ownershipCheck } = require('./middleware/auth');
 
 function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, caseGenerator }) {
   const app = express();
   app.use(express.json());
+  // Resolve optional identity (req.identity) for all /api routes.
+  app.use('/api', optionalAuth);
+
+  // Maintained in this closure; injected into route handlers below.
+  const sessionOwnership = ownershipCheck((req) => sessionService.getSessionOwner(req.params.id));
 
   // ---- Health / meta ----
   app.get('/health', (req, res) => {
@@ -38,8 +44,9 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
     res.json({ id: req.params.id, status: caseRepo.getStatus(req.params.id) });
   });
 
-  // Validate a case manifest (deterministic core IP)
-  app.post('/api/validate', (req, res) => {
+  // Validate a case manifest (deterministic core IP) — requires auth+admin.
+  app.post('/api/validate', requireAuth, (req, res) => {
+    if (!req.identity.isAdmin) return res.status(403).json({ error: 'Forbidden: admin required' });
     const manifest = req.body?.manifest;
     if (!manifest || typeof manifest !== 'object') {
       return res.status(400).json({ error: 'manifest object required' });
@@ -50,53 +57,55 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
   });
 
   // ---- Session API ----
+  // Bind to authenticated user when present; anonymous play still allowed.
   app.post('/api/sessions', (req, res) => {
     try {
       const caseId = req.body?.caseId;
       if (typeof caseId !== 'string' || !caseId.trim()) {
         return res.status(400).json({ error: 'caseId is required' });
       }
-      const s = sessionService.start({ userId: req.body.userId || null, caseId: caseId.trim() });
+      const userId = req.identity ? req.identity.userId : (req.body.userId || null);
+      const s = sessionService.start({ userId, caseId: caseId.trim() });
       res.status(201).json(s);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
-  app.get('/api/sessions/:id', (req, res) => {
+  app.get('/api/sessions/:id', sessionOwnership, (req, res) => {
     try { res.json(sessionService._getSession(req.params.id)); }
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
-  app.get('/api/sessions/:id/briefing', (req, res) => {
+  app.get('/api/sessions/:id/briefing', sessionOwnership, (req, res) => {
     try { res.json(sessionService.getBriefing(req.params.id)); }
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
-  app.post('/api/sessions/:id/briefing/seen', (req, res) => {
+  app.post('/api/sessions/:id/briefing/seen', sessionOwnership, (req, res) => {
     try { res.json(sessionService.markBriefingSeen(req.params.id)); }
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
-  app.get('/api/sessions/:id/inventory', (req, res) => {
+  app.get('/api/sessions/:id/inventory', sessionOwnership, (req, res) => {
     try { res.json({ evidence: sessionService.inventory(req.params.id) }); }
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
-  app.get('/api/sessions/:id/discoverable', (req, res) => {
+  app.get('/api/sessions/:id/discoverable', sessionOwnership, (req, res) => {
     try { res.json({ evidence: sessionService.discoverableEvidence(req.params.id) }); }
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
-  app.post('/api/sessions/:id/discover', (req, res) => {
+  app.post('/api/sessions/:id/discover', sessionOwnership, (req, res) => {
     try { res.json(sessionService.discover(req.params.id, req.body.evidenceId)); }
     catch (e) { res.status(400).json({ error: e.message }); }
   });
 
-  app.post('/api/sessions/:id/hypothesis', (req, res) => {
+  app.post('/api/sessions/:id/hypothesis', sessionOwnership, (req, res) => {
     try { res.json(sessionService.addHypothesisEdge(req.params.id, req.body)); }
     catch (e) { res.status(400).json({ error: e.message }); }
   });
 
-  app.post('/api/sessions/:id/accuse', (req, res) => {
+  app.post('/api/sessions/:id/accuse', sessionOwnership, (req, res) => {
     try {
       const r = sessionService.accuse(req.params.id, req.body);
       res.json(r);
@@ -104,7 +113,7 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
   });
 
   // ---- NPC API ----
-  app.post('/api/sessions/:id/interview', async (req, res) => {
+  app.post('/api/sessions/:id/interview', sessionOwnership, async (req, res) => {
     try {
       const session = sessionService._getSession(req.params.id);
       const response = await npcOrchestrator.respond({
@@ -119,8 +128,9 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
-  // ---- Generator API ----
-  app.post('/api/cases/generate', async (req, res) => {
+  // ---- Generator API (costly LLM endpoint — requires admin) ----
+  app.post('/api/cases/generate', requireAuth, async (req, res) => {
+    if (!req.identity.isAdmin) return res.status(403).json({ error: 'Forbidden: admin required' });
     try {
       const params = req.body && typeof req.body === 'object' ? req.body : {};
       const result = await caseGenerator.generateFromPremise(params);

@@ -244,6 +244,13 @@ class GameSessionService {
     return this._hydrate(row);
   }
 
+  /** Resolve the owning user_id of a session (for authorization). */
+  getSessionOwner(sessionId) {
+    const db = getDb();
+    const row = db.prepare('SELECT user_id FROM sessions WHERE id = ?').get(sessionId);
+    return row ? (row.user_id == null ? null : Number(row.user_id)) : null;
+  }
+
   _hydrate(row) {
     return {
       id: row.id,

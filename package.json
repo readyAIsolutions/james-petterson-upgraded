@@ -10,6 +10,7 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "ajv": "^8.20.0",
     "bcryptjs": "^3.0.3",
     "dotenv": "^16.4.5",
     "express": "^4.18.2",
