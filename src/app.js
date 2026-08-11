@@ -71,6 +71,11 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
     catch (e) { res.status(404).json({ error: e.message }); }
   });
 
+  app.post('/api/sessions/:id/briefing/seen', (req, res) => {
+    try { res.json(sessionService.markBriefingSeen(req.params.id)); }
+    catch (e) { res.status(404).json({ error: e.message }); }
+  });
+
   app.get('/api/sessions/:id/inventory', (req, res) => {
     try { res.json({ evidence: sessionService.inventory(req.params.id) }); }
     catch (e) { res.status(404).json({ error: e.message }); }

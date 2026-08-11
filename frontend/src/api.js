@@ -27,6 +27,7 @@ export const api = {
     req('/api/sessions', { method: 'POST', body: JSON.stringify({ caseId, userId }) }),
   getSession: (id) => req(`/api/sessions/${id}`),
   briefing: (id) => req(`/api/sessions/${id}/briefing`),
+  markBriefingSeen: (id) => req(`/api/sessions/${id}/briefing/seen`, { method: 'POST' }),
   inventory: (id) => req(`/api/sessions/${id}/inventory`),
   discoverable: (id) => req(`/api/sessions/${id}/discoverable`),
   discover: (id, evidenceId) =>

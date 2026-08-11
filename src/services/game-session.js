@@ -59,6 +59,22 @@ class GameSessionService {
     return s.briefing;
   }
 
+  /**
+   * Mark the briefing as seen. Gates the "inspect" unlock rule: evidence that
+   * requires inspection (searching/handling) only becomes discoverable after
+   * the player has entered the scene. This prevents the deadlock where
+   * briefing.seen is never set and inspect-gated evidence is permanently hidden.
+   */
+  markBriefingSeen(sessionId) {
+    const db = getDb();
+    const s = this._getSession(sessionId);
+    if (!s.briefing || s.briefing.seen === true) return this._hydrate(db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId));
+    s.briefing = { ...(s.briefing || {}), seen: true };
+    db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
+      .run(JSON.stringify(s), sessionId);
+    return this._hydrate(db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId));
+  }
+
   /** Discovery check: evaluate unlock_rules against current evidence+state. */
   _unlockMet(evidence, state) {
     const rules = evidence.unlock_rules || {};
@@ -86,14 +102,23 @@ class GameSessionService {
     if (!ev) throw new Error(`Evidence not found: ${evidenceId}`);
 
     if (!s.discoveredEvidence.includes(evidenceId)) {
-      s.discoveredEvidence.push(evidenceId);
-      // discoveries.evidence_id references evidence(id) which is namespaced
-      // per-case (<caseId>#<localId>); store the namespaced id to satisfy FK.
-      db.prepare(`
-        INSERT OR IGNORE INTO discoveries (session_id, evidence_id) VALUES (?, ?)
-      `).run(sessionId, `${caseId}#${evidenceId}`);
-      db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
-        .run(JSON.stringify(s), sessionId);
+      // Wrap the ledger insert + state update in a transaction so a mid-way
+      // failure can't diverge them (review finding m4).
+      db.exec('BEGIN');
+      try {
+        s.discoveredEvidence.push(evidenceId);
+        // discoveries.evidence_id references evidence(id) which is namespaced
+        // per-case (<caseId>#<localId>); store the namespaced id to satisfy FK.
+        db.prepare(`
+          INSERT OR IGNORE INTO discoveries (session_id, evidence_id) VALUES (?, ?)
+        `).run(sessionId, `${caseId}#${evidenceId}`);
+        db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
+          .run(JSON.stringify(s), sessionId);
+        db.exec('COMMIT');
+      } catch (e) {
+        db.exec('ROLLBACK');
+        throw e;
+      }
     }
     const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
     return this._hydrate(row);
@@ -114,13 +139,21 @@ class GameSessionService {
     const db = getDb();
     const s = this._getSession(sessionId);
     const id = crypto.randomUUID();
-    s.hypothesisEdges.push({ id, source, target, relation });
-    db.prepare(`
-      INSERT INTO hypothesis_edges (id, session_id, source_node, target_node, relation)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(id, sessionId, source, target, relation);
-    db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
-      .run(JSON.stringify(s), sessionId);
+    // Transactional dual write (m4): state update + ledger insert stay in sync.
+    db.exec('BEGIN');
+    try {
+      s.hypothesisEdges.push({ id, source, target, relation });
+      db.prepare(`
+        INSERT INTO hypothesis_edges (id, session_id, source_node, target_node, relation)
+        VALUES (?, ?, ?, ?, ?)
+      `).run(id, sessionId, source, target, relation);
+      db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
+        .run(JSON.stringify(s), sessionId);
+      db.exec('COMMIT');
+    } catch (e) {
+      db.exec('ROLLBACK');
+      throw e;
+    }
     const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
     return this._hydrate(row);
   }

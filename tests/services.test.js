@@ -96,6 +96,20 @@ describe('GameSessionService', () => {
     expect(inv.map(e => e.id).sort()).toEqual(['ev_letter', 'ev_teacup']);
   });
 
+  test('REGRESSION C1: inspect-gated evidence is discoverable only after briefing seen', () => {
+    // Fresh session (case-001 has inspect-gated ev_teacup / ev_letter / ev_sale_paper).
+    const s = GameSessionService.start({ caseId: 'case-001' });
+    // Before seen: teas/letter/sale (inspect-gated) NOT discoverable.
+    const before = new Set(GameSessionService.discoverableEvidence(s.id).map(e => e.id));
+    expect(before.has('ev_teacup')).toBe(false);
+    expect(before.has('ev_stopped_clock')).toBe(true); // not gated
+    // After marking briefing seen: inspect-gated evidence becomes discoverable.
+    GameSessionService.markBriefingSeen(s.id);
+    const after = new Set(GameSessionService.discoverableEvidence(s.id).map(e => e.id));
+    expect(after.has('ev_teacup')).toBe(true);
+    expect(after.has('ev_letter')).toBe(true);
+  });
+
   test('adding hypothesis edges is idempotent in state', () => {
     const s = GameSessionService.addHypothesisEdge(session.id, { source: 'ev_teacup', target: 'char_marina', relation: 'implicates' });
     expect(s.hypothesisEdges.length).toBe(1);

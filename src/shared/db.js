@@ -242,6 +242,16 @@ function migrate(db) {
   if (!cols.includes('culprit_id')) {
     db.exec(`ALTER TABLE cases ADD COLUMN culprit_id TEXT;`);
   }
+
+  // Prevent duplicate active sessions for the same user+case (m3). A NULL
+  // user_id (anonymous play) is distinct per SQLite UNIQUE semantics, which is
+  // fine — the start() check-then-insert already guards the common case, and
+  // this index makes the DB enforce it for authenticated users even across
+  // concurrent processes.
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_sessions_active_per_user_case
+      ON sessions(user_id, case_id) WHERE status = 'active';
+  `);
 }
 
 module.exports = { createDatabase, DB_PATH };

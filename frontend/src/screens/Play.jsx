@@ -67,7 +67,7 @@ export default function Play({ session, onExit }) {
   const renderView = () => {
     const shared = { caseData, inventory, discovered, discover, suspects };
     switch (view) {
-      case 'briefing': return <Briefing {...shared} onContinue={() => setView('scene')} />;
+      case 'briefing': return <Briefing {...shared} onContinue={async () => { try { await api.markBriefingSeen(sid); } catch (e) { /* optional; non-fatal */ } setView('scene'); }} />;
       case 'scene': return <Scene {...shared} evidenceById={evidenceById} />;
       case 'board': return <Board {...shared} evidenceById={evidenceById} />;
       case 'timeline': return <Timeline {...shared} />;
