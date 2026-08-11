@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 
-export default function Interview({ suspects, caseData, sessionId, inventory, discovered, evidenceById }) {
-  const [selected, setSelected] = useState(suspects[0]?.id || null);
+export default function Interview({ suspects, sessionId, inventory, evidenceById, initialSelected = null }) {
+  const [selected, setSelected] = useState(initialSelected || suspects[0]?.id || null);
   const [question, setQuestion] = useState('');
   const [chosenEvidence, setChosenEvidence] = useState([]);
   const [log, setLog] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+
+  // When arriving from the Suspects screen, switch to the selected suspect.
+  useEffect(() => {
+    if (initialSelected && suspects.some((s) => s.id === initialSelected)) {
+      setSelected(initialSelected);
+      setLog([]);
+      setChosenEvidence([]);
+    }
+  }, [initialSelected, suspects]);
 
   const character = suspects.find((s) => s.id === selected);
 

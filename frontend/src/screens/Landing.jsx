@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 
-export default function Landing({ health, onStart }) {
+export default function Landing({ health, onStart, startError }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -32,6 +32,7 @@ export default function Landing({ health, onStart }) {
         </p>
 
         {error && <div className="card bad" style={{ marginBottom: 16 }}>Failed to load cases: {error}</div>}
+        {startError && <div className="card" style={{ marginBottom: 16, borderColor: 'var(--bad)' }}><span className="bad">⚠ Could not open case: {startError}</span></div>}
 
         {loading ? (
           <div className="muted">Loading case files…</div>

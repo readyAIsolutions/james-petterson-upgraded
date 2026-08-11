@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Scene({ caseData, evidenceById, inventory, discovered, discover }) {
+export default function Scene({ caseData, discovered, discover }) {
   if (!caseData) return <div className="muted">Loading scene…</div>;
 
   // Group discoverable evidence by location for an investigation view.

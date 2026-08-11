@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function Timeline({ caseData }) {
   if (!caseData) return <div className="muted">Loading…</div>;
-  const events = [...(caseData.events || [])].sort((a, b) => (a.start < b.start ? -1 : 1));
+  const events = [...(caseData.events || [])].sort((a, b) => String(a.start).localeCompare(String(b.start)));
   return (
     <div>
       <h2>Timeline Reconstruction</h2>

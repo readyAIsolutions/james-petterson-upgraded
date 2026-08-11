@@ -18,6 +18,7 @@ export default function Play({ session, onExit }) {
   const [discovered, setDiscovered] = useState({});
   const [result, setResult] = useState(null); // accusation result
   const [error, setError] = useState(null);
+  const [interviewTarget, setInterviewTarget] = useState(null); // suspect id from Suspects screen
 
   const sid = session.id;
   const caseId = session.case_id;
@@ -70,8 +71,8 @@ export default function Play({ session, onExit }) {
       case 'scene': return <Scene {...shared} evidenceById={evidenceById} />;
       case 'board': return <Board {...shared} evidenceById={evidenceById} />;
       case 'timeline': return <Timeline {...shared} />;
-      case 'suspects': return <Suspects {...shared} onInterview={(cid) => { setView('interview'); }} />;
-      case 'interview': return <Interview {...shared} sessionId={sid} />;
+      case 'suspects': return <Suspects {...shared} onInterview={(cid) => { setInterviewTarget(cid); setView('interview'); }} />;
+      case 'interview': return <Interview {...shared} sessionId={sid} initialSelected={interviewTarget} />;
       case 'accuse': return <Accusation {...shared} sessionId={sid} onResult={(r) => { setResult(r); setView('debrief'); }} />;
       case 'debrief': return <Debrief {...shared} result={result} />;
       default: return null;

@@ -150,7 +150,7 @@ h3 { font-size: 16px; margin: 0 0 6px; }
 .detail { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; overflow: auto; }
 
 /* Evidence board */
-.board-wrap { height: 100%; min-height: 500px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg2); }
+.board-wrap { position: relative; height: 600px; min-height: 500px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: var(--bg2); }
 .board-toolbar { padding: 10px 16px; border-bottom: 1px solid var(--border); display: flex; gap: 8px; align-items: center; background: var(--panel); }
 .node-card { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 12px; width: 160px; }
 .node-card .t { font-weight: 700; }

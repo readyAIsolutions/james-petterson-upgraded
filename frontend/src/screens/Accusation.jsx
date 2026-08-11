@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { api } from '../api';
 
-export default function Accusation({ suspects, caseData, sessionId, onResult, onReveal }) {
+export default function Accusation({ suspects, caseData, sessionId, onResult }) {
   const suspectsOnly = suspects.filter((s) => s.role === 'suspect');
   const [culpritId, setCulpritId] = useState(suspectsOnly[0]?.id || '');
   const [motive, setMotive] = useState('');
@@ -20,7 +20,7 @@ export default function Accusation({ suspects, caseData, sessionId, onResult, on
     setBusy(true); setError(null);
     try {
       const res = await api.accuse(sessionId, {
-        culpritId, motive, method, timeline: timeline.sort(),
+        culpritId, motive, method, timeline: [...timeline].sort(),
       });
       onResult(res);
     } catch (e) {
@@ -68,7 +68,7 @@ export default function Accusation({ suspects, caseData, sessionId, onResult, on
         <div>
           <div className="card">
             <label>Reconstructed Timeline</label>
-            <p className="muted" style={{ fontSize: 12, margin: '4px 0 10px' }}>Select the events in the order you believe they occurred.</p>
+            <p className="muted" style={{ fontSize: 12, margin: '4px 0 10px' }}>Select the events you believe are part of the crime.</p>
             <div className="col">
               {events.map((e) => (
                 <div key={e.id} className="evidence-item" onClick={() => toggleEvent(e.id)}>
