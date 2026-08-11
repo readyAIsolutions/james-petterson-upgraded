@@ -87,9 +87,11 @@ class GameSessionService {
 
     if (!s.discoveredEvidence.includes(evidenceId)) {
       s.discoveredEvidence.push(evidenceId);
+      // discoveries.evidence_id references evidence(id) which is namespaced
+      // per-case (<caseId>#<localId>); store the namespaced id to satisfy FK.
       db.prepare(`
         INSERT OR IGNORE INTO discoveries (session_id, evidence_id) VALUES (?, ?)
-      `).run(sessionId, evidenceId);
+      `).run(sessionId, `${caseId}#${evidenceId}`);
       db.prepare('UPDATE sessions SET state = ?, updated_at = datetime(\'now\') WHERE id = ?')
         .run(JSON.stringify(s), sessionId);
     }

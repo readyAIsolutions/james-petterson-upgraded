@@ -55,7 +55,7 @@ class CaseGenerator {
           model: GEN_MODEL,
           extra: { json: true },
           messages: [
-            { role: 'system', content: 'You draft original fair-play mystery premises. Return JSON only: {premise, victim, setting, suspects:[3 names], culprit_index:0..2, motive, method}. Do not reference real people or existing works.' },
+            { role: 'system', content: 'You draft original fair-play mystery premises. Return JSON only: {title:"A short evocative case title", premise:"one or two sentences", victim:"full name", setting:"brief", suspects:["3 full names"], culprit_index:0..2, motive:"", method:"poisoning or other"}. Invent fresh names and titles, never reuse "Final Hour". Do not reference real people or existing works.' },
             { role: 'user', content: `Genre: ${schema.genre}. Setting: ${schema.setting}. Difficulty: ${schema.difficulty}.` },
           ],
         });
@@ -105,7 +105,7 @@ class CaseGenerator {
 
       const poisoned = p.method.includes('poison');
       return {
-        title: `${p.victim.split(' ')[0]}'s Final Hour`,
+        title: p.title || this._makeTitle(p, params),
         description: p.premise,
         premise: p.premise,
         settings: {
@@ -155,6 +155,24 @@ class CaseGenerator {
     } catch {
       return null;
     }
+  }
+
+  // Distinct, genre-aware case titles for the deterministic/fallback path.
+  _makeTitle(p, params) {
+    const first = String(p.victim || 'The Victim').split(' ')[0];
+    const genre = (params && params.genre) || 'mystery';
+    const arc = {
+      murder: `${first} in the Manor`,
+      poison: `The Bitter Cup of ${first}`,
+      heist: `The ${first} Affair`,
+      disappearance: `Where Has ${first} Gone?`,
+      fraud: `The Ledger of ${first}`,
+      locked_room: `Locked In with ${first}`,
+      arson: `Fire at ${first}'s Door`,
+      kidnapping: `The Taking of ${first}`,
+      mystery: `The Case of ${first}`,
+    }[genre] || `The Case of ${first}`;
+    return arc;
   }
 
   _assemble(gt, params, premise) {

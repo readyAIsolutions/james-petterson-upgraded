@@ -1,0 +1,649 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for services/ai-gateway.js</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style type='text/css'>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">services</a> ai-gateway.js</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">41.55% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>32/77</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">31.08% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>23/74</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">36.36% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>4/11</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">43.66% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>31/71</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <pre><table class="coverage">
+<tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
+<a name='L2'></a><a href='#L2'>2</a>
+<a name='L3'></a><a href='#L3'>3</a>
+<a name='L4'></a><a href='#L4'>4</a>
+<a name='L5'></a><a href='#L5'>5</a>
+<a name='L6'></a><a href='#L6'>6</a>
+<a name='L7'></a><a href='#L7'>7</a>
+<a name='L8'></a><a href='#L8'>8</a>
+<a name='L9'></a><a href='#L9'>9</a>
+<a name='L10'></a><a href='#L10'>10</a>
+<a name='L11'></a><a href='#L11'>11</a>
+<a name='L12'></a><a href='#L12'>12</a>
+<a name='L13'></a><a href='#L13'>13</a>
+<a name='L14'></a><a href='#L14'>14</a>
+<a name='L15'></a><a href='#L15'>15</a>
+<a name='L16'></a><a href='#L16'>16</a>
+<a name='L17'></a><a href='#L17'>17</a>
+<a name='L18'></a><a href='#L18'>18</a>
+<a name='L19'></a><a href='#L19'>19</a>
+<a name='L20'></a><a href='#L20'>20</a>
+<a name='L21'></a><a href='#L21'>21</a>
+<a name='L22'></a><a href='#L22'>22</a>
+<a name='L23'></a><a href='#L23'>23</a>
+<a name='L24'></a><a href='#L24'>24</a>
+<a name='L25'></a><a href='#L25'>25</a>
+<a name='L26'></a><a href='#L26'>26</a>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a>
+<a name='L33'></a><a href='#L33'>33</a>
+<a name='L34'></a><a href='#L34'>34</a>
+<a name='L35'></a><a href='#L35'>35</a>
+<a name='L36'></a><a href='#L36'>36</a>
+<a name='L37'></a><a href='#L37'>37</a>
+<a name='L38'></a><a href='#L38'>38</a>
+<a name='L39'></a><a href='#L39'>39</a>
+<a name='L40'></a><a href='#L40'>40</a>
+<a name='L41'></a><a href='#L41'>41</a>
+<a name='L42'></a><a href='#L42'>42</a>
+<a name='L43'></a><a href='#L43'>43</a>
+<a name='L44'></a><a href='#L44'>44</a>
+<a name='L45'></a><a href='#L45'>45</a>
+<a name='L46'></a><a href='#L46'>46</a>
+<a name='L47'></a><a href='#L47'>47</a>
+<a name='L48'></a><a href='#L48'>48</a>
+<a name='L49'></a><a href='#L49'>49</a>
+<a name='L50'></a><a href='#L50'>50</a>
+<a name='L51'></a><a href='#L51'>51</a>
+<a name='L52'></a><a href='#L52'>52</a>
+<a name='L53'></a><a href='#L53'>53</a>
+<a name='L54'></a><a href='#L54'>54</a>
+<a name='L55'></a><a href='#L55'>55</a>
+<a name='L56'></a><a href='#L56'>56</a>
+<a name='L57'></a><a href='#L57'>57</a>
+<a name='L58'></a><a href='#L58'>58</a>
+<a name='L59'></a><a href='#L59'>59</a>
+<a name='L60'></a><a href='#L60'>60</a>
+<a name='L61'></a><a href='#L61'>61</a>
+<a name='L62'></a><a href='#L62'>62</a>
+<a name='L63'></a><a href='#L63'>63</a>
+<a name='L64'></a><a href='#L64'>64</a>
+<a name='L65'></a><a href='#L65'>65</a>
+<a name='L66'></a><a href='#L66'>66</a>
+<a name='L67'></a><a href='#L67'>67</a>
+<a name='L68'></a><a href='#L68'>68</a>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a>
+<a name='L76'></a><a href='#L76'>76</a>
+<a name='L77'></a><a href='#L77'>77</a>
+<a name='L78'></a><a href='#L78'>78</a>
+<a name='L79'></a><a href='#L79'>79</a>
+<a name='L80'></a><a href='#L80'>80</a>
+<a name='L81'></a><a href='#L81'>81</a>
+<a name='L82'></a><a href='#L82'>82</a>
+<a name='L83'></a><a href='#L83'>83</a>
+<a name='L84'></a><a href='#L84'>84</a>
+<a name='L85'></a><a href='#L85'>85</a>
+<a name='L86'></a><a href='#L86'>86</a>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a>
+<a name='L99'></a><a href='#L99'>99</a>
+<a name='L100'></a><a href='#L100'>100</a>
+<a name='L101'></a><a href='#L101'>101</a>
+<a name='L102'></a><a href='#L102'>102</a>
+<a name='L103'></a><a href='#L103'>103</a>
+<a name='L104'></a><a href='#L104'>104</a>
+<a name='L105'></a><a href='#L105'>105</a>
+<a name='L106'></a><a href='#L106'>106</a>
+<a name='L107'></a><a href='#L107'>107</a>
+<a name='L108'></a><a href='#L108'>108</a>
+<a name='L109'></a><a href='#L109'>109</a>
+<a name='L110'></a><a href='#L110'>110</a>
+<a name='L111'></a><a href='#L111'>111</a>
+<a name='L112'></a><a href='#L112'>112</a>
+<a name='L113'></a><a href='#L113'>113</a>
+<a name='L114'></a><a href='#L114'>114</a>
+<a name='L115'></a><a href='#L115'>115</a>
+<a name='L116'></a><a href='#L116'>116</a>
+<a name='L117'></a><a href='#L117'>117</a>
+<a name='L118'></a><a href='#L118'>118</a>
+<a name='L119'></a><a href='#L119'>119</a>
+<a name='L120'></a><a href='#L120'>120</a>
+<a name='L121'></a><a href='#L121'>121</a>
+<a name='L122'></a><a href='#L122'>122</a>
+<a name='L123'></a><a href='#L123'>123</a>
+<a name='L124'></a><a href='#L124'>124</a>
+<a name='L125'></a><a href='#L125'>125</a>
+<a name='L126'></a><a href='#L126'>126</a>
+<a name='L127'></a><a href='#L127'>127</a>
+<a name='L128'></a><a href='#L128'>128</a>
+<a name='L129'></a><a href='#L129'>129</a>
+<a name='L130'></a><a href='#L130'>130</a>
+<a name='L131'></a><a href='#L131'>131</a>
+<a name='L132'></a><a href='#L132'>132</a>
+<a name='L133'></a><a href='#L133'>133</a>
+<a name='L134'></a><a href='#L134'>134</a>
+<a name='L135'></a><a href='#L135'>135</a>
+<a name='L136'></a><a href='#L136'>136</a>
+<a name='L137'></a><a href='#L137'>137</a>
+<a name='L138'></a><a href='#L138'>138</a>
+<a name='L139'></a><a href='#L139'>139</a>
+<a name='L140'></a><a href='#L140'>140</a>
+<a name='L141'></a><a href='#L141'>141</a>
+<a name='L142'></a><a href='#L142'>142</a>
+<a name='L143'></a><a href='#L143'>143</a>
+<a name='L144'></a><a href='#L144'>144</a>
+<a name='L145'></a><a href='#L145'>145</a>
+<a name='L146'></a><a href='#L146'>146</a>
+<a name='L147'></a><a href='#L147'>147</a>
+<a name='L148'></a><a href='#L148'>148</a>
+<a name='L149'></a><a href='#L149'>149</a>
+<a name='L150'></a><a href='#L150'>150</a>
+<a name='L151'></a><a href='#L151'>151</a>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a>
+<a name='L157'></a><a href='#L157'>157</a>
+<a name='L158'></a><a href='#L158'>158</a>
+<a name='L159'></a><a href='#L159'>159</a>
+<a name='L160'></a><a href='#L160'>160</a>
+<a name='L161'></a><a href='#L161'>161</a>
+<a name='L162'></a><a href='#L162'>162</a>
+<a name='L163'></a><a href='#L163'>163</a>
+<a name='L164'></a><a href='#L164'>164</a>
+<a name='L165'></a><a href='#L165'>165</a>
+<a name='L166'></a><a href='#L166'>166</a>
+<a name='L167'></a><a href='#L167'>167</a>
+<a name='L168'></a><a href='#L168'>168</a>
+<a name='L169'></a><a href='#L169'>169</a>
+<a name='L170'></a><a href='#L170'>170</a>
+<a name='L171'></a><a href='#L171'>171</a>
+<a name='L172'></a><a href='#L172'>172</a>
+<a name='L173'></a><a href='#L173'>173</a>
+<a name='L174'></a><a href='#L174'>174</a>
+<a name='L175'></a><a href='#L175'>175</a>
+<a name='L176'></a><a href='#L176'>176</a>
+<a name='L177'></a><a href='#L177'>177</a>
+<a name='L178'></a><a href='#L178'>178</a>
+<a name='L179'></a><a href='#L179'>179</a>
+<a name='L180'></a><a href='#L180'>180</a>
+<a name='L181'></a><a href='#L181'>181</a>
+<a name='L182'></a><a href='#L182'>182</a>
+<a name='L183'></a><a href='#L183'>183</a>
+<a name='L184'></a><a href='#L184'>184</a>
+<a name='L185'></a><a href='#L185'>185</a>
+<a name='L186'></a><a href='#L186'>186</a>
+<a name='L187'></a><a href='#L187'>187</a>
+<a name='L188'></a><a href='#L188'>188</a>
+<a name='L189'></a><a href='#L189'>189</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-yes">4x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">'use strict';
+/**
+ * AIGateway - OpenRouter-compatible model routing abstraction.
+ *
+ * The blueprint's rule: "Swap models without rewriting game." Every service
+ * that needs an LLM talks to this gateway. It handles:
+ *   - provider/model routing
+ *   - retries + timeouts
+ *   - token/cost budgeting
+ *   - caching (cheap repeat calls)
+ *   - safety policy hooks
+ *   - telemetry (persisted to ai_calls)
+ *
+ * If no OPENROUTER_API_KEY is set, the gateway falls back to a deterministic
+ * "scripted" mode so the whole platform is testable offline. This keeps the
+ * price of entry at zero — the user asked for open-source, no-extra-sofware.
+ */
+const crypto = require('node:crypto');
+const { getDb } = require('../shared/database');
+&nbsp;
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+&nbsp;
+class AIGateway {
+  constructor() {
+    this.apiKey = process.env.OPENROUTER_API_KEY || '';
+    this.defaultModel = process.env.DEFAULT_MODEL || 'openai/gpt-4o-mini';
+    this.budget = { maxTokens: process.env.AI_BUDGET_TOKENS ? <span class="branch-0 cbranch-no" title="branch not covered" >Number(process.env.AI_BUDGET_TOKENS) </span>: 1e9 };
+    this.cache = new Map(); // simple in-memory cache: prompt -&gt; {response, model, ttl}
+    this.scriptedCallbacks = new Map(); // purpose -&gt; fn(scope) for offline mode
+  }
+&nbsp;
+  /**
+   * Register a deterministic handler used when the gateway is offline.
+   * Handlers receive a scope object and return { text, fields }.
+   */
+  registerScripted(purpose, fn) {
+    this.scriptedCallbacks.set(purpose, fn);
+  }
+&nbsp;
+<span class="fstat-no" title="function not covered" >  se</span>tApiKey(key) {
+<span class="cstat-no" title="statement not covered" >    this.apiKey = key;</span>
+  }
+&nbsp;
+  /**
+   * Main entry point.
+   * @param {object} opts
+   * @param {string} opts.purpose - e.g. 'npc_dialogue', 'narrate', 'describe'
+   * @param {Array&lt;{role,content}&gt;} opts.messages
+   * @param {string} [opts.model]
+   * @param {number} [opts.maxTokens]
+   * @param {string} [opts.sessionId]
+   * @param {object} [opts.extra] - structured field hints (response_format etc.)
+   * @param {boolean} [opts.useCache]
+   * @returns {Promise&lt;{text:string, fields?:object, provider, model, tokens, latency_ms, cost, cached}&gt;}
+   */
+  async complete(opts) {
+    const started = Date.now();
+    const model = opts.model || <span class="branch-1 cbranch-no" title="branch not covered" >this.defaultModel;</span>
+    const purpose = opts.purpose || <span class="branch-1 cbranch-no" title="branch not covered" >'generic';</span>
+    const sessionId = opts.sessionId || <span class="branch-1 cbranch-no" title="branch not covered" >null;</span>
+    const useCache = opts.useCache !== false;
+&nbsp;
+    const cacheKey = useCache ? `${model}::${purpose}::${JSON.stringify(opts.messages)}` : <span class="branch-1 cbranch-no" title="branch not covered" >null;</span>
+    <span class="missing-if-branch" title="if path not taken" >I</span>if (cacheKey &amp;&amp; this.cache.has(cacheKey)) {
+      const hit = <span class="cstat-no" title="statement not covered" >this.cache.get(cacheKey);</span>
+<span class="cstat-no" title="statement not covered" >      this._record({</span>
+        sessionId, purpose, provider: 'cache', model, tokens: 0,
+        latency_ms: 0, cost: 0, trace_id: hit.traceId, note: 'cache hit'
+      });
+<span class="cstat-no" title="statement not covered" >      return { ...hit.value, cached: true };</span>
+    }
+&nbsp;
+    // Offline / no-API-key path -&gt; deterministic scripted handlers
+    <span class="missing-if-branch" title="else path not taken" >E</span>if (!this.apiKey) {
+      const cb = this.scriptedCallbacks.get(purpose);
+      <span class="missing-if-branch" title="if path not taken" >I</span>if (!cb) {
+<span class="cstat-no" title="statement not covered" >        throw new Error(`AIGateway offline and no scripted handler for purpose '${purpose}'. Set OPENROUTER_API_KEY or register a handler.`);</span>
+      }
+      const value = await cb({
+        messages: opts.messages,
+        model, purpose,
+        extra: opts.extra || <span class="branch-1 cbranch-no" title="branch not covered" >{},</span>
+        sessionId,
+        scope: opts.scope || <span class="branch-1 cbranch-no" title="branch not covered" >null,</span>
+      });
+      const text = typeof value === 'string' ? <span class="branch-0 cbranch-no" title="branch not covered" >value </span>: value.text;
+      const fields = typeof value === 'object' &amp;&amp; !Array.isArray(value) ? (value.fields || {}) : <span class="branch-1 cbranch-no" title="branch not covered" >{};</span>
+      const traceId = crypto.randomUUID();
+      this._record({ sessionId, purpose, provider: 'scripted', model, tokens: 0, latency_ms: Date.now() - started, cost: 0, trace_id: traceId });
+      const result = { text, fields, provider: 'scripted', model, tokens: 0, latency_ms: Date.now() - started, cost: 0, traceId, cached: false };
+      <span class="missing-if-branch" title="else path not taken" >E</span>if (useCache) this.cache.set(cacheKey, { value: result, traceId });
+      return result;
+    }
+&nbsp;
+    // Live path
+    const body = <span class="cstat-no" title="statement not covered" >{</span>
+      model,
+      messages: opts.messages,
+      temperature: opts.temperature ?? 0.7,
+      max_tokens: opts.maxTokens ?? 512,
+    };
+<span class="cstat-no" title="statement not covered" >    if (opts.extra &amp;&amp; opts.extra.response_format) {</span>
+<span class="cstat-no" title="statement not covered" >      body.response_format = opts.extra.response_format;</span>
+    }
+<span class="cstat-no" title="statement not covered" >    if (opts.extra &amp;&amp; opts.extra.json) {</span>
+<span class="cstat-no" title="statement not covered" >      body.response_format = { type: 'json_object' };</span>
+    }
+&nbsp;
+    let lastErr;
+<span class="cstat-no" title="statement not covered" >    for (let attempt = <span class="cstat-no" title="statement not covered" >0;</span> attempt &lt; 4; attempt++) {</span>
+<span class="cstat-no" title="statement not covered" >      try {</span>
+        const ctrl = <span class="cstat-no" title="statement not covered" >new AbortController();</span>
+        const timer = <span class="cstat-no" title="statement not covered" >setTimeout(<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >ctrl.abort(),</span> 45000);</span>
+        const resp = <span class="cstat-no" title="statement not covered" >await fetch(OPENROUTER_URL, {</span>
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`,
+            'HTTP-Referer': 'https://ai-detective.local',
+            'X-Title': 'AI Detective Platform',
+          },
+          body: JSON.stringify(body),
+          signal: ctrl.signal,
+        });
+<span class="cstat-no" title="statement not covered" >        clearTimeout(timer);</span>
+<span class="cstat-no" title="statement not covered" >        if (!resp.ok) {</span>
+<span class="cstat-no" title="statement not covered" >          lastErr = new Error(`OpenRouter HTTP ${resp.status}: ${await resp.text()}`);</span>
+          // 429 = rate-limited -&gt; back off longer; 5xx = transient
+          const isRate = <span class="cstat-no" title="statement not covered" >resp.status === 429;</span>
+<span class="cstat-no" title="statement not covered" >          await new Promise(<span class="fstat-no" title="function not covered" >(r</span>) =&gt; <span class="cstat-no" title="statement not covered" >setTimeout(r, (isRate ? 2000 : 500) * (attempt + 1)))</span>;</span>
+<span class="cstat-no" title="statement not covered" >          continue;</span>
+        }
+        const data = <span class="cstat-no" title="statement not covered" >await resp.json();</span>
+        const text = <span class="cstat-no" title="statement not covered" >data.choices?.[0]?.message?.content || '';</span>
+        const usage = <span class="cstat-no" title="statement not covered" >data.usage || {};</span>
+        const fields = <span class="cstat-no" title="statement not covered" >opts.extra?.json ? this._tryParseJson(text) : {};</span>
+        const result = <span class="cstat-no" title="statement not covered" >{</span>
+          text, fields, provider: 'openrouter', model,
+          tokens: usage.prompt_tokens + usage.completion_tokens || 0,
+          latency_ms: Date.now() - started,
+          cost: this._estimateCost(model, usage),
+          traceId: crypto.randomUUID(),
+          cached: false,
+        };
+<span class="cstat-no" title="statement not covered" >        this._record({ sessionId, purpose, provider: 'openrouter', model, tokens: result.tokens, latency_ms: result.latency_ms, cost: result.cost, trace_id: result.traceId });</span>
+<span class="cstat-no" title="statement not covered" >        if (useCache) <span class="cstat-no" title="statement not covered" >this.cache.set(cacheKey, { value: result, traceId: result.traceId });</span></span>
+<span class="cstat-no" title="statement not covered" >        return result;</span>
+      } catch (e) {
+<span class="cstat-no" title="statement not covered" >        lastErr = e;</span>
+<span class="cstat-no" title="statement not covered" >        await new Promise(<span class="fstat-no" title="function not covered" >r </span>=&gt; <span class="cstat-no" title="statement not covered" >setTimeout(r, 300 * (attempt + 1)))</span>;</span>
+      }
+    }
+<span class="cstat-no" title="statement not covered" >    throw lastErr || new Error('AI Gateway request failed');</span>
+  }
+&nbsp;
+<span class="fstat-no" title="function not covered" >  _t</span>ryParseJson(text) {
+<span class="cstat-no" title="statement not covered" >    try {</span>
+      const m = <span class="cstat-no" title="statement not covered" >text.match(/\{[\s\S]*\}/);</span>
+<span class="cstat-no" title="statement not covered" >      return m ? JSON.parse(m[0]) : { raw: text };</span>
+    } catch {
+<span class="cstat-no" title="statement not covered" >      return { raw: text };</span>
+    }
+  }
+&nbsp;
+<span class="fstat-no" title="function not covered" >  _e</span>stimateCost(model, usage) {
+    // Rough per-1k token pricing; refine per model later.
+    const rate = <span class="cstat-no" title="statement not covered" >model.includes('gpt-4o-mini') ? 0.00000015 :</span>
+                 model.includes('free') ? 0 : 0.0000004;
+<span class="cstat-no" title="statement not covered" >    return ((usage.prompt_tokens || 0) + (usage.completion_tokens || 0)) * rate;</span>
+  }
+&nbsp;
+  _record({ sessionId, purpose, provider, model, tokens, latency_ms, cost, trace_id, note }) {
+    try {
+      const db = getDb();
+      db.prepare(`
+        INSERT INTO ai_calls (id, session_id, purpose, provider, model, tokens, latency_ms, cost, trace_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(crypto.randomUUID(), sessionId, purpose, provider, model, tokens, latency_ms, cost, trace_id);
+    } catch (e) {
+      // telemetry must never break gameplay
+<span class="cstat-no" title="statement not covered" >      console.error('ai_calls telemetry error:', e.message);</span>
+    }
+  }
+&nbsp;
+<span class="fstat-no" title="function not covered" >  cl</span>earCache() { <span class="cstat-no" title="statement not covered" >this.cache.clear(); </span>}
+}
+&nbsp;
+module.exports = { AIGateway };
+&nbsp;</pre></td></tr></table></pre>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-08-11T05:42:12.200Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    

@@ -107,10 +107,10 @@ class AIGateway {
     }
 
     let lastErr;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 4; attempt++) {
       try {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), 30000);
+        const timer = setTimeout(() => ctrl.abort(), 45000);
         const resp = await fetch(OPENROUTER_URL, {
           method: 'POST',
           headers: {
@@ -125,6 +125,9 @@ class AIGateway {
         clearTimeout(timer);
         if (!resp.ok) {
           lastErr = new Error(`OpenRouter HTTP ${resp.status}: ${await resp.text()}`);
+          // 429 = rate-limited -> back off longer; 5xx = transient
+          const isRate = resp.status === 429;
+          await new Promise((r) => setTimeout(r, (isRate ? 2000 : 500) * (attempt + 1)));
           continue;
         }
         const data = await resp.json();
