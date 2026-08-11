@@ -59,7 +59,10 @@ class CaseGenerator {
             { role: 'user', content: `Genre: ${schema.genre}. Setting: ${schema.setting}. Difficulty: ${schema.difficulty}.` },
           ],
         });
-        return res.text;
+        // The gateway already parses JSON into res.fields; fall back to res.text parse.
+        const parsed = res.fields && (res.fields.premise || res.fields.suspects) ? res.fields : this._tryParseJson(res.text);
+        if (parsed && parsed.suspects) return parsed;
+        // malformed -> fall through to deterministic
       } catch (e) {
         // fall through to deterministic
       }
@@ -143,6 +146,15 @@ class CaseGenerator {
       };
     }
     throw new Error('unsupported premise');
+  }
+
+  _tryParseJson(text) {
+    try {
+      const m = String(text).match(/\{[\s\S]*\}/);
+      return m ? JSON.parse(m[0]) : null;
+    } catch {
+      return null;
+    }
   }
 
   _assemble(gt, params, premise) {
