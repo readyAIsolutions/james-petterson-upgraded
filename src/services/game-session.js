@@ -145,7 +145,7 @@ class GameSessionService {
       WHERE id = ?
     `).run(JSON.stringify(s), result.score, sessionId);
 
-    return { ...result, accusationId: accId };
+    return { ...result, accusationId: accId, culpritId, motive, method, timeline: timeline || [] };
   }
 
   /**
