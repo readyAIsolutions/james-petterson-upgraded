@@ -9,21 +9,29 @@ import Interview from './Interview';
 import Accusation from './Accusation';
 import Debrief from './Debrief';
 
-const VIEWS = ['briefing', 'scene', 'board', 'timeline', 'suspects', 'interview', 'accuse', 'debrief'];
+const VIEWS = [
+  { key: 'briefing', label: 'Briefing', icon: '📜' },
+  { key: 'scene', label: 'The Scene', icon: '🔍' },
+  { key: 'board', label: 'Evidence Board', icon: '🗂️' },
+  { key: 'timeline', label: 'Timeline', icon: '🕰️' },
+  { key: 'suspects', label: 'Suspects', icon: '👥' },
+  { key: 'interview', label: 'Interrogation', icon: '🎙️' },
+  { key: 'accuse', label: 'Accuse', icon: '⚖️' },
+  { key: 'debrief', label: 'Verdict', icon: '🏁' },
+];
 
 export default function Play({ session, onExit }) {
   const [view, setView] = useState('briefing');
   const [caseData, setCaseData] = useState(null);
   const [inventory, setInventory] = useState([]);
   const [discovered, setDiscovered] = useState({});
-  const [result, setResult] = useState(null); // accusation result
+  const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
-  const [interviewTarget, setInterviewTarget] = useState(null); // suspect id from Suspects screen
+  const [interviewTarget, setInterviewTarget] = useState(null);
 
   const sid = session.id;
   const caseId = session.case_id;
 
-  // Load case + inventory on mount.
   useEffect(() => {
     let mounted = true;
     Promise.all([api.loadCase(caseId), api.inventory(sid)])
@@ -59,22 +67,20 @@ export default function Play({ session, onExit }) {
     [caseData]
   );
 
-  const navLabels = {
-    briefing: 'Briefing', scene: 'Scene', board: 'Evidence Board', timeline: 'Timeline',
-    suspects: 'Suspects', interview: 'Interview', accuse: 'Accuse', debrief: 'Debrief',
-  };
+  // Progress: current index within VIEWS
+  const viewIdx = Math.max(0, VIEWS.findIndex((v) => v.key === view));
 
   const renderView = () => {
     const shared = { caseData, inventory, discovered, discover, suspects };
     switch (view) {
-      case 'briefing': return <Briefing {...shared} onContinue={async () => { try { await api.markBriefingSeen(sid); } catch (e) { /* optional; non-fatal */ } setView('scene'); }} />;
+      case 'briefing': return <Briefing {...shared} onContinue={async () => { try { await api.markBriefingSeen(sid); } catch (e) {} setView('scene'); }} />;
       case 'scene': return <Scene {...shared} evidenceById={evidenceById} />;
       case 'board': return <Board {...shared} evidenceById={evidenceById} />;
       case 'timeline': return <Timeline {...shared} />;
       case 'suspects': return <Suspects {...shared} onInterview={(cid) => { setInterviewTarget(cid); setView('interview'); }} />;
       case 'interview': return <Interview {...shared} sessionId={sid} initialSelected={interviewTarget} />;
       case 'accuse': return <Accusation {...shared} sessionId={sid} onResult={(r) => { setResult(r); setView('debrief'); }} />;
-      case 'debrief': return <Debrief {...shared} result={result} />;
+      case 'debrief': return <Debrief {...shared} result={result} onExit={onExit} />;
       default: return null;
     }
   };
@@ -82,34 +88,50 @@ export default function Play({ session, onExit }) {
   return (
     <div className="app-shell">
       <div className="topbar">
-        <span className="brand">The Detective's Board</span>
-        <button className="btn ghost" onClick={onExit}>← Exit</button>
-        <span className="case-title">{caseData?.title || session.case_id}</span>
+        <span className="brand"><span className="logo">⌁</span>Board</span>
+        <span className="case-title font-serif" style={{ fontStyle: 'italic' }}>{caseData?.title || session.case_id}</span>
         <span className="spacer" />
-        <span className="pill">{suspects.filter((s) => s.role === 'suspect').length} suspects</span>
-        <span className="pill">{inventory.length} evidence</span>
+        <button className="btn ghost small" onClick={onExit}>← Exit case</button>
       </div>
 
-      <div className="main" style={{ height: '100%', overflow: 'hidden', display: 'flex' }}>
+      <div className="steps">
+        {VIEWS.map((v, i) => (
+          <div key={v.key} className={`step ${i < viewIdx ? 'done' : i === viewIdx ? 'now' : ''}`} />
+        ))}
+      </div>
+
+      <div className="main" style={{ paddingTop: 14, overflow: 'hidden', display: 'flex' }}>
         <div className="play-grid" style={{ width: '100%' }}>
           <aside className="sidebar">
             {VIEWS.map((v) => (
               <button
-                key={v}
-                className={`nav-item ${view === v ? 'active' : ''}`}
-                onClick={() => setView(v)}
+                key={v.key}
+                className={`nav-item ${view === v.key ? 'active' : ''}`}
+                onClick={() => setView(v.key)}
+                title={v.key === 'interview' && !interviewTarget ? 'Pick a suspect first' : undefined}
               >
-                {navLabels[v]}
-                {v === 'scene' && <span className="count">{inventory.length}</span>}
+                <span className="icon">{v.icon}</span>
+                {v.label}
+                {v.key === 'scene' && <span className="count">{inventory.length}</span>}
+                {v.key === 'suspects' && <span className="count">{suspects.filter((s) => s.role === 'suspect').length}</span>}
+                {v.key === 'debrief' && result && <span className="count" style={{ background: 'rgba(74,222,128,0.2)', color: 'var(--good)' }}>{result.score}</span>}
               </button>
             ))}
+            <div className="muted" style={{ fontSize: 11.5, marginTop: 14, padding: '0 8px' }}>
+              <div style={{ fontWeight: 600, marginBottom: 6 }}>CASE PROGRESS</div>
+              <div className="muted" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <span className="good">●</span> {inventory.length} evidence collected
+              </div>
+            </div>
           </aside>
-          <section className="detail">{renderView()}</section>
+          <section className="detail" key={view}>{renderView()}</section>
         </div>
       </div>
 
       {error && (
-        <div className="status-bar"><span className="bad">⚠ {error}</span></div>
+        <div className="status-bar" style={{ padding: 10, textAlign: 'center' }}>
+          <span className="bad">⚠ {error}</span>
+        </div>
       )}
     </div>
   );

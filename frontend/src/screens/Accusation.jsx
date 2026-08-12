@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { api } from '../api';
 
 export default function Accusation({ suspects, caseData, sessionId, onResult }) {
@@ -11,31 +11,25 @@ export default function Accusation({ suspects, caseData, sessionId, onResult }) 
   const [error, setError] = useState(null);
 
   const events = caseData?.events || [];
+  const selectedCulprit = suspects.find((s) => s.id === culpritId);
 
-  const toggleEvent = (id) =>
-    setTimeline((t) => (t.includes(id) ? t.filter((x) => x !== id) : [...t, id]));
+  const toggleEvent = (id) => setTimeline((t) => (t.includes(id) ? t.filter((x) => x !== id) : [...t, id]));
 
   const submit = async () => {
     if (busy) return;
     setBusy(true); setError(null);
     try {
-      const res = await api.accuse(sessionId, {
-        culpritId, motive, method, timeline: [...timeline].sort(),
-      });
+      const res = await api.accuse(sessionId, { culpritId, motive, method, timeline: [...timeline].sort() });
       onResult(res);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setBusy(false);
-    }
+    } catch (e) { setError(e.message); } finally { setBusy(false); }
   };
 
   return (
     <div>
       <h2>Make Your Accusation</h2>
-      <p className="muted">Name the culprit. State the motive and method. Reconstruct the timeline.</p>
+      <p className="muted">Name the culprit. State the motive and method. Reconstruct the timeline. This is your verdict.</p>
 
-      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 16, gap: 16 }}>
+      <div className="grid" style={{ gridTemplateColumns: '1fr 1fr', marginTop: 18, gap: 18 }}>
         <div>
           <div className="card">
             <div className="field">
@@ -44,16 +38,16 @@ export default function Accusation({ suspects, caseData, sessionId, onResult }) 
                 <div key={s.id} className="row" style={{ marginBottom: 8 }}>
                   <button
                     className="btn"
-                    style={{ width: '100%', textAlign: 'left', borderColor: culpritId === s.id ? 'var(--accent)' : undefined }}
+                    style={{ width: '100%', textAlign: 'left', justifyContent: 'space-between', borderColor: culpritId === s.id ? 'rgba(240,184,72,0.6)' : undefined }}
                     onClick={() => setCulpritId(s.id)}
                   >
                     <span style={{ fontWeight: 700 }}>{s.name}</span>
-                    {culpritId === s.id && <span className="accent"> ✓</span>}
+                    {culpritId === s.id && <span className="good" style={{ fontSize: 18 }}>✓</span>}
                   </button>
                 </div>
               ))}
+              {selectedCulprit && <p className="muted" style={{ fontSize: 12.5, marginTop: 6 }}>That's a serious accusation, investigator.</p>}
             </div>
-
             <div className="field">
               <label>Motive</label>
               <textarea rows={2} placeholder="e.g. wanted the inheritance" value={motive} onChange={(e) => setMotive(e.target.value)} />
@@ -68,16 +62,18 @@ export default function Accusation({ suspects, caseData, sessionId, onResult }) 
         <div>
           <div className="card">
             <label>Reconstructed Timeline</label>
-            <p className="muted" style={{ fontSize: 12, margin: '4px 0 10px' }}>Select the events you believe are part of the crime.</p>
-            <div className="col">
+            <p className="muted" style={{ fontSize: 12.5, margin: '4px 0 12px' }}>Select the events you believe are part of the crime.</p>
+            <div className="col" style={{ gap: 6 }}>
               {events.map((e) => (
-                <div key={e.id} className="evidence-item" onClick={() => toggleEvent(e.id)}>
+                <div key={e.id} className={`evidence-item ${timeline.includes(e.id) ? 'discovered' : ''}`} onClick={() => toggleEvent(e.id)}>
                   <div className="row spread">
                     <div>
                       <div className="etype">{e.start}</div>
                       <div style={{ fontWeight: 700 }}>{e.title || e.id}</div>
                     </div>
-                    <input type="checkbox" readOnly checked={timeline.includes(e.id)} />
+                    <span className="collect-check" style={{ fontSize: 16 }}>
+                      {timeline.includes(e.id) ? '✓' : '○'}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -86,11 +82,11 @@ export default function Accusation({ suspects, caseData, sessionId, onResult }) 
         </div>
       </div>
 
-      <div style={{ marginTop: 20 }}>
-        <button className="btn danger" onClick={submit} disabled={busy || !culpritId}>
+      <div style={{ marginTop: 22 }}>
+        <button className="btn danger big" onClick={submit} disabled={busy || !culpritId}>
           {busy ? 'Adjudicating…' : 'Submit Accusation'}
         </button>
-        {error && <span className="bad" style={{ marginLeft: 12 }}>{error}</span>}
+        {error && <span className="bad" style={{ marginLeft: 14 }}>{error}</span>}
       </div>
     </div>
   );

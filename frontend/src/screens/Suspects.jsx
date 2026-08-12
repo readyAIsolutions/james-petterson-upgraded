@@ -1,21 +1,28 @@
 import React from 'react';
 
+const ROLE_LABEL = { suspect: 'Suspect', witness: 'Witness', victim: 'Victim' };
+
 export default function Suspects({ suspects, onInterview }) {
   return (
     <div>
-      <h2>Suspects &amp; Persons of Interest</h2>
-      <p className="muted">{suspects.length} in the cast. All had reason. One is lying. Click a suspect to interrogate them.</p>
-      <div className="grid" style={{ marginTop: 16 }}>
+      <div className="row spread" style={{ marginBottom: 18 }}>
+        <div>
+          <h2 style={{ margin: 0 }}>Suspects &amp; Persons of Interest</h2>
+          <p className="muted" style={{ margin: '6px 0 0' }}>{suspects.length} in the cast. All had reason. One is lying.</p>
+        </div>
+        <span className="pill">{suspects.filter((s) => s.role === 'suspect').length} suspects</span>
+      </div>
+
+      <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {suspects.map((s) => (
-          <div key={s.id} className="suspect-row" onClick={() => onInterview && onInterview(s.id)}>
-            <div>
-              <span className={`pill ${s.role}`}>{s.role}</span>
+          <div key={s.id} className="card interactive" onClick={() => onInterview && onInterview(s.id)}>
+            <div className="row spread">
+              <span className={`pill ${s.role}`}>{ROLE_LABEL[s.role] || s.role}</span>
+              <span className="violet" style={{ fontSize: 22 }}>{s.role === 'witness' ? '👁️' : '🕵️'}</span>
             </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 700, fontFamily: 'var(--font)' }}>{s.name}</div>
-              {s.motive && <div className="muted" style={{ fontSize: 13 }}>{s.motive}</div>}
-            </div>
-            <span className="muted">Interrogate →</span>
+            <h3 style={{ marginTop: 14 }}>{s.name}</h3>
+            {s.motive && <p className="muted" style={{ fontSize: 14, lineHeight: 1.5 }}>"{s.motive}"</p>}
+            <div className="violet" style={{ fontSize: 13, fontWeight: 600, marginTop: 10 }}>Interrogate →</div>
           </div>
         ))}
       </div>

@@ -1,0 +1,22 @@
+{
+  "name": "admin-case-viewer",
+  "version": "0.1.0",
+  "description": "Admin dashboard for case validation, canonical truth inspection, and case management",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.0",
+    "supertest": "^7.0.0"
+  },
+  "keywords": ["ai", "detective", "admin", "case", "viewer"],
+  "author": "Raj and Team",
+  "license": "MIT"
+}
