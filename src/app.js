@@ -5,6 +5,7 @@
  * against an isolated in-memory DB.
  */
 const express = require('express');
+const { publicView, pubId } = require('./services/case-view');
 const { optionalAuth, requireAuth, ownershipCheck } = require('./middleware/auth');
 
 function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, caseGenerator }) {
@@ -23,21 +24,30 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
 
   // ---- Case API ----
   app.get('/api/cases', (req, res) => {
-    const list = caseRepo.list(!!req.query.include_drafts);
+    const list = caseRepo.list(false).map(({ id, title, difficulty, status, premise }) => ({ id, title, difficulty, status, premise }));
     res.json({ cases: list });
   });
 
-  app.post('/api/cases/:id/load', (req, res) => {
+  // Admin only: loading a manifest overwrites a case.
+  app.post('/api/cases/:id/load', requireAuth, (req, res) => {
+    if (!req.identity.isAdmin) return res.status(403).json({ error: 'Forbidden: admin required' });
     try {
       const saved = caseRepo.save({ id: req.params.id, ...(req.body && req.body.manifest ? { manifest: req.body.manifest, title: req.body.title, difficulty: req.body.difficulty } : { manifest: { }, title: 'Empty', difficulty: 'medium' }) });
       res.json(saved);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
+  // Player-safe case view. Never contains the truth. With ?session=<id> it
+  // reflects that session's progress (found evidence, revealed events, ...).
   app.get('/api/cases/:id', (req, res) => {
     const manifest = caseRepo.load(req.params.id);
     if (!manifest) return res.status(404).json({ error: 'Case not found' });
-    res.json(manifest);
+    let session = null;
+    if (req.query.session) {
+      try { session = sessionService._getSession(String(req.query.session)); } catch (e) { session = null; }
+      if (session && session.case_id !== req.params.id) session = null;
+    }
+    res.json(publicView(req.params.id, manifest, session));
   });
 
   app.get('/api/cases/:id/status', (req, res) => {
@@ -65,7 +75,8 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
         return res.status(400).json({ error: 'caseId is required' });
       }
       const userId = req.identity ? req.identity.userId : (req.body.userId || null);
-      const s = sessionService.start({ userId, caseId: caseId.trim() });
+      const difficulty = req.body?.difficulty;
+      const s = sessionService.start({ userId, caseId: caseId.trim(), difficulty });
       res.status(201).json(s);
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
@@ -86,18 +97,20 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
   });
 
   app.get('/api/sessions/:id/inventory', sessionOwnership, (req, res) => {
-    try { res.json({ evidence: sessionService.inventory(req.params.id) }); }
-    catch (e) { res.status(404).json({ error: e.message }); }
-  });
-
-  app.get('/api/sessions/:id/discoverable', sessionOwnership, (req, res) => {
-    try { res.json({ evidence: sessionService.discoverableEvidence(req.params.id) }); }
-    catch (e) { res.status(404).json({ error: e.message }); }
+    try {
+      const sess = sessionService._getSession(req.params.id);
+      const view = publicView(sess.case_id, caseRepo.load(sess.case_id), sess);
+      res.json({ evidence: view.evidence.filter((e) => e.discovered) });
+    } catch (e) { res.status(404).json({ error: e.message }); }
   });
 
   app.post('/api/sessions/:id/discover', sessionOwnership, (req, res) => {
-    try { res.json(sessionService.discover(req.params.id, req.body.evidenceId)); }
-    catch (e) { res.status(400).json({ error: e.message }); }
+    try {
+      sessionService.discover(req.params.id, req.body.evidenceId);
+      const sess = sessionService._getSession(req.params.id);
+      const view = publicView(sess.case_id, caseRepo.load(sess.case_id), sess);
+      res.json({ ok: true, case: view });
+    } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
   app.post('/api/sessions/:id/hypothesis', sessionOwnership, (req, res) => {
@@ -112,19 +125,45 @@ function createApp({ db, aiGateway, sessionService, npcOrchestrator, caseRepo, c
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 
+  // Deterministic, difficulty-aware hints — never touches case truth.
+  app.get('/api/sessions/:id/hints', sessionOwnership, (req, res) => {
+    try { res.json(sessionService.hints(req.params.id)); }
+    catch (e) { res.status(404).json({ error: e.message }); }
+  });
+
   // ---- NPC API ----
   app.post('/api/sessions/:id/interview', sessionOwnership, async (req, res) => {
     try {
       const session = sessionService._getSession(req.params.id);
+      const manifest = caseRepo.load(session.case_id);
+      // Resolve the real evidence titles — the model needs to SEE what the
+      // player is showing the character, not a raw id.
+      const { resolveEvidenceId } = require('./services/case-view');
+      const presentedEvidence = [];
+      for (const given of (Array.isArray(req.body.presentedEvidenceIds) ? req.body.presentedEvidenceIds : [])) {
+        const id = resolveEvidenceId(manifest, session.case_id, given);
+        // You can only show evidence you actually hold.
+        if (!id || !session.discoveredEvidence.includes(id)) continue;
+        presentedEvidence.push({ id, title: (manifest.evidence.find((e) => e.id === id) || {}).title });
+      }
       const response = await npcOrchestrator.respond({
         session,
         characterId: req.body.characterId,
         question: req.body.question,
-        presentedEvidence: (req.body.presentedEvidenceIds || []).map(id =>
-          ({ id, title: id })
-        ),
+        presentedEvidence,
       });
-      res.json(response);
+      const target = (manifest.characters || []).find((c) => c.id === req.body.characterId);
+      if (!target || target.role === 'victim') throw new Error('You cannot interview that person.');
+      // Persist emotion memory + which lies have cracked (server-side truth).
+      sessionService.saveInterviewState(req.params.id, req.body.characterId, response.next_emotion, response.newly_broken);
+      // Player-safe reply: never expose lie ids, fact ids or "rejected" flags.
+      res.json({
+        characterId: response.characterId,
+        spoken_text: response.spoken_text,
+        mood: { trust: response.next_emotion.trust, stress: response.next_emotion.stress, met: response.next_emotion.met },
+        cracked: (response.newly_broken || []).length > 0,
+        ai_offline: response.provider === 'fallback' || response.provider === 'scripted',
+      });
     } catch (e) { res.status(400).json({ error: e.message }); }
   });
 

@@ -10,6 +10,7 @@
 const crypto = require('node:crypto');
 const { getDb } = require('../shared/database');
 const CaseRepository = require('./case-repository');
+const { resolveEvidenceId, requiresMet } = require('./case-view');
 
 class GameSessionService {
   constructor(repo = CaseRepository) {
@@ -18,9 +19,12 @@ class GameSessionService {
 
   /**
    * Start (or resume) a session for a user on a case.
+   * @param {object} opts { userId, caseId, difficulty? }
+   *   difficulty: 'easy' | 'standard' | 'hard'. Only changes CLUE SUPPORT
+   *   (hint availability), never the case truth.
    * @returns {object} session
    */
-  start({ userId = null, caseId }) {
+  start({ userId = null, caseId, difficulty }) {
     const db = getDb();
     const manifest = this.repo.load(caseId);
     if (!manifest) throw new Error(`Case not found: ${caseId}`);
@@ -34,6 +38,7 @@ class GameSessionService {
 
     const id = crypto.randomUUID();
     const state = {
+      difficulty: ['easy', 'standard', 'hard'].includes(difficulty) ? difficulty : 'standard',
       discoveredEvidence: [],
       hypothesisEdges: [],
       interviews: {},
@@ -51,6 +56,52 @@ class GameSessionService {
     `).run(id, userId, caseId, 'v1', JSON.stringify(state));
     const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(id);
     return this._hydrate(row);
+  }
+
+  /**
+   * Deterministic, difficulty-aware hints. The truth never changes between
+   * difficulties — only how much help the player receives:
+   *   - easy:    all 3 hint tiers (directional, specific, near-answer)
+   *   - standard: tiers 1-2 (directional, specific)
+   *   - hard:    tier 1 only (nudges, no spoon-feeding)
+   * A tier unlocks from evidence progress, not from time — the player must
+   * actually find things for the case to "remember" the next nudge.
+   * @returns {object} { difficulty, tier, hints: [{tier, text, unlocked}], criticalFound }
+   */
+  hints(sessionId) {
+    const s = this._getSession(sessionId);
+    const manifest = this.repo.load(s.case_id);
+    const difficulty = s.difficulty || 'standard';
+    const all = (manifest.hints && manifest.hints[difficulty]) || (manifest.hints && (manifest.hints.easy || manifest.hints.standard || manifest.hints.hard)) || [];
+
+    const criticalIds = new Set(
+      (manifest.facts || []).filter((f) => f.category === 'critical').map((f) => f.id)
+    );
+    const criticalFound = (manifest.evidence || []).filter(
+      (e) => e.fact_links && e.fact_links.some((fid) => criticalIds.has(fid)) && s.discoveredEvidence.includes(e.id)
+    ).length;
+
+    // Tier thresholds are clue-progress based.
+    const tierFor = (i) => {
+      if (difficulty === 'easy') return i < 1 ? 1 : i < 3 ? 2 : 3;            // 0h:1, 1-2h:2, 3+h:3
+      if (difficulty === 'standard') return i < 1 ? 1 : i < 2 ? 2 : 2;         // 0h:1, 1h:2, 2h+:2
+      return 1;                                                                // hard: only directional
+    };
+
+    const unlocked = [];
+    for (let i = 0; i < all.length; i++) {
+      const h = typeof all[i] === 'string' ? { tier: i + 1, text: all[i] } : all[i];
+      const required = tierFor(i);
+      const progress = criticalFound >= 2 ? 3 : criticalFound >= 1 ? 2 : 1;
+      if (required <= progress) unlocked.push({ tier: h.tier ?? required, text: h.text });
+    }
+    // Easy mode also offers an extra "gentle reminder" beyond the case's own hints.
+    const extra = [];
+    if (difficulty === 'easy') {
+      extra.push({ tier: 1, text: 'Reminder: your notebook only contains what you have actually found. Keep searching locations before you judge anyone.' });
+    }
+
+    return { difficulty, tier: unlocked.length ? unlocked[unlocked.length - 1].tier : 0, hints: [...extra, ...unlocked], criticalFound };
   }
 
   /** Get the current visible (player-facing) briefing. */
@@ -93,13 +144,18 @@ class GameSessionService {
   }
 
   /** Mark evidence as discovered by the player. Deterministic, idempotent. */
-  discover(sessionId, evidenceId) {
+  discover(sessionId, givenId) {
     const db = getDb();
     const s = this._getSession(sessionId);
     const caseId = s.case_id;
     const manifest = this.repo.load(caseId);
-    const ev = (manifest.evidence || []).find(e => e.id === evidenceId);
-    if (!ev) throw new Error(`Evidence not found: ${evidenceId}`);
+    const evidenceId = resolveEvidenceId(manifest, caseId, givenId);
+    const ev = evidenceId && (manifest.evidence || []).find(e => e.id === evidenceId);
+    if (!ev) throw new Error(`Evidence not found: ${givenId}`);
+    // Dependency tree: some evidence can only be found once its prerequisites are.
+    if (!requiresMet(ev, new Set(s.discoveredEvidence))) {
+      throw new Error('You have no reason to look there yet. Something you have not found points the way.');
+    }
 
     if (!s.discoveredEvidence.includes(evidenceId)) {
       // Wrap the ledger insert + state update in a transaction so a mid-way
@@ -122,6 +178,19 @@ class GameSessionService {
     }
     const row = db.prepare('SELECT * FROM sessions WHERE id = ?').get(sessionId);
     return this._hydrate(row);
+  }
+
+  /** Persist per-character interview state (emotion memory, broken lies). */
+  saveInterviewState(sessionId, characterId, slot, brokenLies) {
+    const db = getDb();
+    const row = db.prepare('SELECT state FROM sessions WHERE id = ?').get(sessionId);
+    if (!row) throw new Error(`Session not found: ${sessionId}`);
+    const state = JSON.parse(row.state || '{}');
+    state.interviews = state.interviews || {};
+    state.interviews[characterId] = slot;
+    if (brokenLies) state.brokenLies = Array.from(new Set([...(state.brokenLies || []), ...brokenLies]));
+    db.prepare("UPDATE sessions SET state = ?, updated_at = datetime('now') WHERE id = ?")
+      .run(JSON.stringify(state), sessionId);
   }
 
   /** Get the player's evidence inventory. */
@@ -158,83 +227,134 @@ class GameSessionService {
     return this._hydrate(row);
   }
 
-  /** Final accusation. Deterministically scored against canonical state. */
-  accuse(sessionId, { culpritId, motive, method, timeline }) {
+  /**
+   * Final accusation. Deterministic. A correct NAME alone is only "partly
+   * correct": to SOLVE the case the player must cite evidence from every proof
+   * group the case author defined (access/opportunity, motive, method).
+   * Attempts are limited by difficulty; the full solution is revealed only
+   * when the case is solved or the attempts run out.
+   */
+  accuse(sessionId, { culpritId, motive, method, timeline, reason, evidenceIds }) {
     const db = getDb();
     const s = this._getSession(sessionId);
     const caseId = s.case_id;
+    if (s.status === 'completed') throw new Error('This case is closed.');
     const manifest = this.repo.load(caseId);
+    if (!(manifest.characters || []).some((c) => c.id === culpritId && c.role === 'suspect')) {
+      throw new Error('Pick one of the suspects.');
+    }
 
-    const result = this.score(manifest, s, { culpritId, motive, method, timeline });
+    const difficulty = s.difficulty || 'standard';
+    const maxAttempts = { easy: 3, standard: 2, hard: 1 }[difficulty] || 2;
+    const attempts = (s.attempts || 0) + 1;
 
+    // Only evidence the player has actually found can be cited.
+    const cited = [];
+    for (const g of Array.isArray(evidenceIds) ? evidenceIds : []) {
+      const id = resolveEvidenceId(manifest, caseId, g);
+      if (id && s.discoveredEvidence.includes(id) && !cited.includes(id)) cited.push(id);
+    }
+
+    const result = this.score(manifest, s, { culpritId, motive, method, timeline, cited });
+    const nameRight = culpritId === manifest.culprit_id;
+    const proof = this._proofCheck(manifest, cited);
+    const reasonOk = String(reason || '').trim().length >= 40;
+    let verdict;
+    if (!nameRight) verdict = 'incorrect';
+    else if (proof.complete && reasonOk) verdict = 'solved';
+    else verdict = 'partly_correct';
+
+    const closed = verdict === 'solved' || attempts >= maxAttempts;
     const accId = crypto.randomUUID();
+    s.attempts = attempts;
     db.prepare(`
       INSERT INTO accusations (id, session_id, culprit_id, motive, method, timeline, score, breakdown)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      accId, sessionId, culpritId, motive, method,
-      JSON.stringify(timeline || []), result.score, JSON.stringify(result.breakdown)
-    );
-    db.prepare(`
-      UPDATE sessions SET state = ?, score = ?, status = 'completed', updated_at = datetime('now')
-      WHERE id = ?
-    `).run(JSON.stringify(s), result.score, sessionId);
+    `).run(accId, sessionId, culpritId, motive || '', method || '', JSON.stringify(timeline || []), result.score, JSON.stringify(result.breakdown));
+    db.prepare(`UPDATE sessions SET state = ?, score = ?, status = ?, updated_at = datetime('now') WHERE id = ?`)
+      .run(JSON.stringify(s), result.score, closed ? 'completed' : 'active', sessionId);
 
-    return { ...result, accusationId: accId, culpritId, motive, method, timeline: timeline || [] };
+    const feedback = {
+      incorrect: 'Your evidence does not point where you say it does. Look again at who could actually have done each step.',
+      partly_correct: !nameRight ? '' : (
+        !proof.complete
+          ? `You have the right person, but you have not proven it. Missing from your case: ${proof.missing.join(', ')}.`
+          : 'You have the right person and the evidence, but you must explain your reasoning (at least a couple of sentences).'),
+      solved: 'Your case holds together. The evidence convicts and the alternatives fall away.',
+    }[verdict];
+
+    const out = {
+      verdict, closed, attempts, attemptsLeft: Math.max(0, maxAttempts - attempts),
+      score: result.score, breakdown: result.breakdown, feedback,
+      culpritId, reason: reason || null, correct: verdict === 'solved',
+    };
+    if (closed) {
+      const culprit = manifest.characters.find((c) => c.id === manifest.culprit_id);
+      out.reveal = {
+        culprit_id: manifest.culprit_id,
+        culprit_name: culprit && culprit.name,
+        motive: culprit && culprit.motive,
+        solution: manifest.solution || null,
+        red_herrings: manifest.red_herrings || [],
+        clue_map: manifest.clue_map || [],
+      };
+    }
+    return out;
+  }
+
+  /** Which proof groups does the cited evidence satisfy? */
+  _proofCheck(manifest, citedIds) {
+    const groups = manifest.proof || [];
+    if (!groups.length) return { complete: true, missing: [] };
+    const set = new Set(citedIds);
+    const missing = groups.filter((g) => !g.any_of.some((id) => set.has(id))).map((g) => g.label);
+    return { complete: missing.length === 0, missing };
   }
 
   /**
-   * Deterministic scoring (blueprint §12):
-   *   culprit 30%, motive 15%, method 15%, timeline 20%, evidence 15%, efficiency 5%
+   * Deterministic scoring: culprit 30, motive 15, method 15, timeline 20,
+   * evidence 20. Wrong timeline picks subtract from right ones.
    */
   score(manifest, state, accusation) {
     const breakdown = {};
-
-    // 1. Correct culprit (30)
     breakdown.culprit = accusation.culpritId === manifest.culprit_id ? 30 : 0;
 
-    // 2. Motive (15) — free-text; compare normalized keywords from culprit's motive
     const culpritMotive = this._norm(manifest.characters.find(c => c.id === manifest.culprit_id)?.motive || '');
-    const givenMotive = this._norm(accusation.motive || '');
-    breakdown.motive = this._overlap(culpritMotive, givenMotive) >= 0.4 ? 15 : Math.round(15 * this._overlap(culpritMotive, givenMotive));
+    const m = this._overlap(culpritMotive, this._norm(accusation.motive || ''));
+    breakdown.motive = m >= 0.4 ? 15 : Math.round(15 * m / 0.4);
 
-    // 3. Method (15) — match canonical conclusion fact
-    const methodFact = manifest.facts.find(f => f.id === 'fact_method')?.value || '';
-    const givenMethod = this._norm(accusation.method || '');
-    breakdown.method = this._overlap(this._norm(methodFact), givenMethod) >= 0.4 ? 15 : Math.round(15 * this._overlap(this._norm(methodFact), givenMethod));
+    const methodFact = this._norm(manifest.facts.find(f => f.id === 'fact_method')?.value || '');
+    const me = this._overlap(methodFact, this._norm(accusation.method || ''));
+    breakdown.method = me >= 0.4 ? 15 : Math.round(15 * me / 0.4);
 
-    // 4. Timeline (20) — fraction of canonical critical events the player placed
-    const criticalEvents = (manifest.events || []).filter(e => e.is_public || (e.actors || []).includes(manifest.culprit_id));
+    const critical = new Set((manifest.events || [])
+      .filter(e => (e.actors || []).includes(manifest.culprit_id) || e.is_public).map(e => e.id));
     const placed = new Set((accusation.timeline || []).map(String));
-    let matched = 0;
-    for (const e of criticalEvents) if (placed.has(e.id)) matched++;
-    breakdown.timeline = criticalEvents.length ? Math.round(20 * (matched / criticalEvents.length)) : 20;
+    let right = 0, wrong = 0;
+    for (const id of placed) (critical.has(id) ? right++ : wrong++);
+    breakdown.timeline = critical.size ? Math.max(0, Math.round(20 * (right - wrong * 0.5) / critical.size)) : 20;
 
-    // 5. Evidence coverage (15) — fraction of discovered evidence that links to canonical facts
-    const evidence = manifest.evidence || [];
-    const discoveredSet = new Set(state.discoveredEvidence || []);
-    const relevant = evidence.filter(e => (e.fact_links || []).filter(id => manifest.facts.find(f => f.id === id && f.category === 'critical')).length > 0);
-    const found = relevant.filter(e => discoveredSet.has(e.id)).length;
-    breakdown.evidence = relevant.length ? Math.round(15 * (found / relevant.length)) : 15;
+    // Evidence: share of the proof groups covered by what the player cited.
+    const proof = this._proofCheck(manifest, accusation.cited || []);
+    const groups = (manifest.proof || []).length || 1;
+    breakdown.evidence = Math.round(20 * (groups - proof.missing.length) / groups);
 
     const score = breakdown.culprit + breakdown.motive + breakdown.method + breakdown.timeline + breakdown.evidence;
     return { score, breakdown };
   }
 
-  /** Reject competing culprits: verify at least one critical fact excludes rivals. */
-  _rejectRivals(manifest) {
-    return manifest.culprit_id ? true : false;
-  }
-
   _norm(s) {
-    return String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
+    return String(s || '').toLowerCase()
+      .replace(/[^a-z0-9 ]/g, ' ')
+      .split(/\s+/).filter(Boolean)
+      .map((w) => w.replace(/(ing|ed|es|s)$/, ''));
   }
   _overlap(a, b) {
     if (!a.length || !b.length) return 0;
     const set = new Set(b);
     let hits = 0;
     for (const w of a) if (set.has(w)) hits++;
-    return hits / a.length;
+    return hits / Math.max(a.length, 1);
   }
 
   _getSession(sessionId) {
@@ -252,14 +372,15 @@ class GameSessionService {
   }
 
   _hydrate(row) {
+    // Column values are authoritative; the JSON blob must never shadow them.
     return {
+      ...JSON.parse(row.state || '{}'),
       id: row.id,
       user_id: row.user_id,
       case_id: row.case_id,
       status: row.status,
       score: row.score,
       started_at: row.started_at,
-      ...JSON.parse(row.state || '{}'),
     };
   }
 }

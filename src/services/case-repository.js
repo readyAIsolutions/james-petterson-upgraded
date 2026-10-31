@@ -39,14 +39,15 @@ class CaseRepository {
     db.prepare(`
       INSERT OR REPLACE INTO cases
         (id, version, title, status, difficulty, seed, canonical_hash, premise,
-         description, settings, culprit_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         description, settings, culprit_id, manifest_full)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       id, version, title, 'published', difficulty, seed, canonicalHash,
       manifest.premise || null,
       manifest.description || null,
       JSON.stringify(manifest.settings || {}),
-      manifest.culprit_id || null
+      manifest.culprit_id || null,
+      JSON.stringify(manifest || {})
     );
 
     const ns = (l) => this._ns(id, l);
@@ -212,6 +213,16 @@ class CaseRepository {
     const relationships = getRows('SELECT source_id, target_id, type, strength FROM relationships WHERE case_id = ?', id)
       .map((r) => ({ source: un(r.source_id), target: un(r.target_id), type: r.type, strength: r.strength }));
 
+    // Rich authoring fields (voice cards, hints, clue map, solution, killer
+    // POV, red herring notes, opening scene, narrator voice) survive only in
+    // the full-manifest JSON blob. Merge it over the normalized rows so
+    // load() returns exactly what was authored. Old cases (no blob) fall back
+    // to normalized rows only — same behavior as before this column existed.
+    let rich = {};
+    if (row.manifest_full) {
+      try { rich = JSON.parse(row.manifest_full) || {}; } catch { rich = {}; }
+    }
+
     return {
       title: row.title,
       difficulty: row.difficulty,
@@ -221,14 +232,17 @@ class CaseRepository {
       premise: row.premise,
       description: row.description,
       settings: JSON.parse(row.settings || '{}'),
-      locations, facts, characters, knowledge, events, evidence, lies, relationships
+      locations, facts, characters, knowledge, events, evidence, lies, relationships,
+      // Spread any authoring-only fields stored in the blob (id-based arrays
+      // are dropped by the merge below when the blob arrays are normalized).
+      ...rich,
     };
   }
 
   list(includeDrafts = false) {
     const db = getDb();
     const rows = db.prepare(
-      `SELECT id, title, version, difficulty, status, canonical_hash FROM cases
+      `SELECT id, title, version, difficulty, status, canonical_hash, premise, description FROM cases
        WHERE status = 'published' OR ? = 1`).all(includeDrafts ? 1 : 0);
     return rows;
   }

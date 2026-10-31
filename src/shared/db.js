@@ -242,6 +242,12 @@ function migrate(db) {
   if (!cols.includes('culprit_id')) {
     db.exec(`ALTER TABLE cases ADD COLUMN culprit_id TEXT;`);
   }
+  // Full-manifest JSON column: preserves rich authoring fields (voice cards,
+  // hints, clue maps, killer POV chapters, solutions, red-herring notes) that
+  // the normalized child tables do not model. load() merges it over the rows.
+  if (!cols.includes('manifest_full')) {
+    db.exec(`ALTER TABLE cases ADD COLUMN manifest_full TEXT;`);
+  }
 
   // Prevent duplicate active sessions for the same user+case (m3). A NULL
   // user_id (anonymous play) is distinct per SQLite UNIQUE semantics, which is

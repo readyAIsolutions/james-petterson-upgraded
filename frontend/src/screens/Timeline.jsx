@@ -11,7 +11,7 @@ export default function Timeline({ caseData }) {
       <div className="row spread" style={{ marginBottom: 14 }}>
         <div>
           <h2 style={{ margin: 0 }}>Timeline Reconstruction</h2>
-          <p className="muted" style={{ margin: '6px 0 0' }}>The order of events — what happened, and when.</p>
+          <p className="muted" style={{ margin: '6px 0 0' }}>Only what you can prove appears here. Find the records and the night fills in.</p>
         </div>
         <span className="pill">{events.length} events</span>
       </div>

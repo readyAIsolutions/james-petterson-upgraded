@@ -325,3 +325,24 @@ label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px
 
 /* empty state */
 .empty { text-align:center; color: var(--dim); padding: 40px 20px; font-style: italic; }
+
+/* ---- Novel-style case presentation (Patterson pacing) ---- */
+.novel-cover { text-align: center; padding: 34px 22px 22px; border: 1px solid var(--border); border-radius: 14px; background: linear-gradient(180deg, rgba(120,90,220,0.08), transparent 55%); margin-bottom: 18px; }
+.novel-kicker { font-size: 11px; letter-spacing: 5px; font-weight: 800; color: var(--accent); }
+.novel-epigraph { font-family: var(--font-serif); font-style: italic; color: var(--text-dim); font-size: 15px; margin: 12px auto 4px; max-width: 520px; line-height: 1.6; }
+.novel-title { font-size: 42px; font-family: var(--font-serif); margin: 14px 0 6px; line-height: 1.1; }
+.novel-byline { font-size: 12px; letter-spacing: 3px; text-transform: uppercase; color: var(--dim); }
+.novel-body { border-left: 3px solid rgba(240,184,72,0.45); border-radius: 4px 14px 14px 4px; }
+
+/* ---- Killer POV chapters ---- */
+.killer-pov .card { border-left: 4px solid rgba(248,113,113,0.65); }
+
+/* ---- Interview composure meters ---- */
+.meter { height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+.meter-fill { height: 100%; border-radius: 99px; transition: width .5s ease; }
+.meter-fill.stress { background: linear-gradient(90deg, #f0554d, #fb923c); }
+.meter-fill.trust { background: linear-gradient(90deg, #4ade80, #2dd4bf); }
+
+/* ---- Landing mode cards + blurb ---- */
+.mode-card { border-radius: 12px !important; min-width: 180px; }
+.case-card .blurb { font-size: 13.5px; color: var(--text-dim); line-height: 1.55; margin: 4px 0 0; min-height: 62px; }

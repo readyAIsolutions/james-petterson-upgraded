@@ -5,51 +5,62 @@ const dims = [
   { key: 'motive', label: 'Motive', max: 15 },
   { key: 'method', label: 'Method', max: 15 },
   { key: 'timeline', label: 'Timeline', max: 20 },
-  { key: 'evidence', label: 'Evidence', max: 15 },
+  { key: 'evidence', label: 'Evidence', max: 20 },
 ];
 
 export default function Debrief({ result, caseData, onExit }) {
   const [barsOn, setBarsOn] = useState(false);
   useEffect(() => { const t = setTimeout(() => setBarsOn(true), 200); return () => clearTimeout(t); }, []);
-
   if (!result) return <div className="empty">No accusation recorded.</div>;
 
-  const culprit = caseData.characters.find((c) => c.id === caseData.culprit_id);
-  const guessed = caseData.characters.find((c) => c.id === result.culpritId);
-  const solved = culprit && culprit.id === result.culpritId;
+  const rv = result.reveal || {};
+  const solved = result.verdict === 'solved';
+  const partly = result.verdict === 'partly_correct';
+  const guessed = (caseData.characters || []).find((c) => c.id === result.culpritId);
+  const sol = rv.solution;
   const score = result.score ?? 0;
 
   return (
     <div>
       <div className={`verdict-banner ${solved ? 'solved' : 'failed'}`} style={{ border: '1px solid' }}>
-        <span className="glyph">{solved ? '🕊️' : '🌀'}</span>
+        <span className="glyph">{solved ? '🕊️' : partly ? '⚖️' : '🌀'}</span>
         <h1 style={{ fontSize: 44, margin: 0 }} className={solved ? 'good' : 'bad'}>
-          {solved ? 'Case Solved' : 'The Truth Eludes You'}
+          {solved ? 'Case Solved' : partly ? 'Right Person, Case Not Proven' : 'The Truth Eludes You'}
         </h1>
-        <p className="font-serif" style={{ fontSize: 18, marginTop: 10 }}>
-          {solved ? 'You caught them. Well done, investigator.' : `You accused ${guessed?.name || 'the wrong person'}.`}
-        </p>
+        <p className="font-serif" style={{ fontSize: 17, marginTop: 10 }}>{result.feedback}</p>
+        {result.reason && <p className="font-serif" style={{ fontSize: 14.5, marginTop: 8, fontStyle: 'italic' }}>“{result.reason}”</p>}
+        {!solved && <p className="muted" style={{ marginTop: 6 }}>You accused {guessed?.name || 'someone'}.</p>}
       </div>
 
       <div className="card" style={{ marginTop: 18 }}>
-        <h3 className="violet">Verdict</h3>
+        <h3 className="violet">What really happened</h3>
         <p className="font-serif" style={{ lineHeight: 1.7, fontSize: 16.5 }}>
-          The culprit was <strong className="bad">{culprit?.name}</strong>. {culprit?.motive}.
-          {caseData.facts?.map((f) => f.category === 'conclusion' ? ` ${f.value}` : '').join('')}
+          <strong className="bad">{rv.culprit_name}</strong> — {rv.motive}
         </p>
-        <div className="row" style={{ marginTop: 10 }}>
-          <span className="pill good">✓ solved</span>
-          <span className="pill">{inventoryCount(caseData)} evidence in case</span>
-        </div>
+        {sol && (
+          <>
+            <p className="font-serif" style={{ lineHeight: 1.75, fontSize: 15, color: 'var(--text-dim)' }}><strong className="violet">Method: </strong>{sol.method}</p>
+            <p className="font-serif" style={{ lineHeight: 1.75, fontSize: 15, color: 'var(--text-dim)' }}><strong className="violet">How the clues fit: </strong>{sol.narrative}</p>
+          </>
+        )}
       </div>
+
+      {(rv.red_herrings || []).length > 0 && (
+        <div className="card" style={{ marginTop: 18 }}>
+          <h3 className="violet">The false leads</h3>
+          {rv.red_herrings.map((r, i) => (
+            <div key={i} style={{ marginBottom: 12 }}>
+              <div className="muted" style={{ fontSize: 13.5 }}>⚠ {r.suspicious_thing}</div>
+              <div className="font-serif" style={{ fontSize: 14.5, marginTop: 4 }}>{r.truth} {r.explanation}</div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="card" style={{ marginTop: 18 }}>
         <div className="row spread">
           <h3 style={{ margin: 0 }}>Case Score</h3>
-          <span style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-serif)' }}
-            className={score >= 70 ? 'good' : score >= 40 ? 'accent' : 'bad'}>
-            {Math.round(score)}
-          </span>
+          <span style={{ fontSize: 40, fontWeight: 700, fontFamily: 'var(--font-serif)' }} className={score >= 70 ? 'good' : score >= 40 ? 'accent' : 'bad'}>{Math.round(score)}</span>
         </div>
         <div className="score-band" style={{ marginTop: 20 }}>
           {dims.map((d) => {
@@ -71,8 +82,4 @@ export default function Debrief({ result, caseData, onExit }) {
       </div>
     </div>
   );
-}
-
-function inventoryCount(caseData) {
-  return (caseData?.evidence || []).length;
 }

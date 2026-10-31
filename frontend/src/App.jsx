@@ -12,10 +12,10 @@ export default function App() {
     api.health().then(setHealth).catch(() => setHealth(null));
   }, []);
 
-  const startCase = async (caseId) => {
+  const startCase = async (caseId, difficulty = 'standard') => {
     setStartError(null);
     try {
-      const s = await api.startSession(caseId);
+      const s = await api.startSession(caseId, null, difficulty);
       setSession(s);
     } catch (e) {
       setStartError(e.message || 'Could not open the case. Is the backend running?');

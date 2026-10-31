@@ -21,167 +21,746 @@
     "relationships"
   ],
   "properties": {
-    "title": { "type": "string", "minLength": 1 },
-    "premise": { "type": "string", "minLength": 1 },
-    "description": { "type": "string" },
-    "difficulty": { "enum": ["easy", "medium", "hard", "expert"] },
-    "settings": { "$ref": "#/$defs/CaseSettings" },
-    "culprit_id": { "$ref": "#/$defs/CharId" },
-
-    "locations": { "type": "array", "items": { "$ref": "#/$defs/Location" } },
-    "characters": { "type": "array", "items": { "$ref": "#/$defs/Character" } },
-    "facts": { "type": "array", "items": { "$ref": "#/$defs/Fact" } },
-    "knowledge": { "type": "array", "items": { "$ref": "#/$defs/Knowledge" } },
-    "events": { "type": "array", "items": { "$ref": "#/$defs/Event" } },
-    "evidence": { "type": "array", "items": { "$ref": "#/$defs/Evidence" } },
-    "lies": { "type": "array", "items": { "$ref": "#/$defs/Lie" } },
-    "relationships": { "type": "array", "items": { "$ref": "#/$defs/Relationship" } },
-
-    "seed": { "type": ["string", "null"] },
-    "canonical_hash": { "type": ["string", "null"] }
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "premise": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string"
+    },
+    "difficulty": {
+      "enum": [
+        "easy",
+        "medium",
+        "hard",
+        "expert"
+      ]
+    },
+    "settings": {
+      "$ref": "#/$defs/CaseSettings"
+    },
+    "culprit_id": {
+      "$ref": "#/$defs/CharId"
+    },
+    "locations": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Location"
+      }
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Character"
+      }
+    },
+    "facts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Fact"
+      }
+    },
+    "knowledge": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Knowledge"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Event"
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      }
+    },
+    "lies": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Lie"
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Relationship"
+      }
+    },
+    "seed": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "canonical_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "epigraph": {
+      "type": "string",
+      "description": "A one-line hook shown on the case cover, novel-style."
+    },
+    "opening_scene": {
+      "type": "array",
+      "description": "Novel-style opening chapter paragraphs (Patterson pacing: short, cinematic, cliffhanger end).",
+      "items": {
+        "type": "string"
+      }
+    },
+    "red_herrings": {
+      "type": "array",
+      "description": "False leads \u2014 each must carry a truthful explanation revealed in play.",
+      "items": {
+        "$ref": "#/$defs/RedHerring"
+      }
+    },
+    "clue_map": {
+      "type": "array",
+      "description": "Dependency chain: which clue unlocks which discovery.",
+      "items": {
+        "$ref": "#/$defs/ClueLink"
+      }
+    },
+    "hints": {
+      "type": "object",
+      "description": "Tiered, difficulty-split hints. Truth never changes; help levels do.",
+      "properties": {
+        "easy": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "standard": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "hard": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "solution": {
+      "$ref": "#/$defs/Solution"
+    },
+    "killer_pov": {
+      "type": "array",
+      "description": "Killer's-POV chapters (the Patterson device), each unlocked by discovering an evidence item.",
+      "items": {
+        "$ref": "#/$defs/KillerPovChapter"
+      }
+    },
+    "detective_stake": {
+      "type": "string"
+    },
+    "chapter_breaks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "at",
+          "title",
+          "text"
+        ],
+        "properties": {
+          "at": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "proof": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "any_of"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "any_of": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
   },
-
   "$defs": {
-    "Id": { "type": "string", "minLength": 1 },
+    "Id": {
+      "type": "string",
+      "minLength": 1
+    },
     "CharId": {
       "type": "string",
       "description": "A local id referencing an entry in `characters` (e.g. `char_marina`)."
     },
-    "FactId": { "type": "string", "description": "A local id referencing an entry in `facts`." },
-    "EventId": { "type": "string", "description": "A local id referencing an entry in `events`." },
-    "EvidenceId": { "type": "string", "description": "A local id referencing an entry in `evidence`." },
-    "LocationId": { "type": "string", "description": "A local id referencing an entry in `locations`." },
-    "LieId": { "type": "string", "description": "A local id referencing an entry in `lies`." },
-
+    "FactId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `facts`."
+    },
+    "EventId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `events`."
+    },
+    "EvidenceId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `evidence`."
+    },
+    "LocationId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `locations`."
+    },
+    "LieId": {
+      "type": "string",
+      "description": "A local id referencing an entry in `lies`."
+    },
     "CaseSettings": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["crime_location", "weapon_location", "multi_culprit"],
+      "required": [
+        "crime_location",
+        "weapon_location",
+        "multi_culprit"
+      ],
       "properties": {
-        "crime_location": { "$ref": "#/$defs/LocationId" },
-        "weapon_location": { "$ref": "#/$defs/LocationId" },
-        "multi_culprit": { "type": "boolean" },
-        "narration_style": { "type": "string" }
+        "crime_location": {
+          "$ref": "#/$defs/LocationId"
+        },
+        "weapon_location": {
+          "$ref": "#/$defs/LocationId"
+        },
+        "multi_culprit": {
+          "type": "boolean"
+        },
+        "narration_style": {
+          "type": "string"
+        }
       }
     },
-
     "Location": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name"],
+      "required": [
+        "id",
+        "name"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/LocationId" },
-        "name": { "type": "string", "minLength": 1 },
-        "description": { "type": "string" },
-        "meta": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/LocationId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "meta": {
+          "type": "object"
+        }
       }
     },
-
     "Character": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "name", "role", "is_culprit"],
+      "required": [
+        "id",
+        "name",
+        "role",
+        "is_culprit"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/CharId" },
-        "slug": { "type": "string" },
-        "name": { "type": "string", "minLength": 1 },
-        "role": { "$ref": "#/$defs/CharacterRole" },
-        "motive": { "type": ["string", "null"] },
-        "traits": { "type": "object" },
-        "public_profile": { "type": ["string", "null"] },
-        "is_culprit": { "type": "boolean" }
+        "id": {
+          "$ref": "#/$defs/CharId"
+        },
+        "slug": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "$ref": "#/$defs/CharacterRole"
+        },
+        "motive": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "traits": {
+          "type": "object"
+        },
+        "public_profile": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_culprit": {
+          "type": "boolean"
+        },
+        "voice": {
+          "description": "Speaking style card used by the AI actor: style, tics, vocabulary.",
+          "type": [
+            "object",
+            "string"
+          ],
+          "properties": {
+            "style": {
+              "type": "string"
+            },
+            "tics": {
+              "type": "string"
+            },
+            "vocabulary": {
+              "type": "string"
+            }
+          }
+        },
+        "backstory": {
+          "type": "string",
+          "description": "Inner life the actor draws on. Never exposed as facts."
+        },
+        "secret": {
+          "type": [
+            "object",
+            "string"
+          ],
+          "description": "What the character is hiding and why.",
+          "properties": {
+            "what": {
+              "type": "string"
+            },
+            "why": {
+              "type": "string"
+            }
+          }
+        },
+        "triggers": {
+          "type": "object",
+          "description": "Emotional hot buttons; the model reacts when these topics come up.",
+          "properties": {
+            "hot_button": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "interview": {
+          "type": "object",
+          "description": "Per-character behavior modes: opening, accused, evidence_shown.",
+          "properties": {
+            "opening": {
+              "type": "string"
+            },
+            "accused": {
+              "type": "string"
+            },
+            "evidence_shown": {
+              "type": "string"
+            }
+          }
+        },
+        "public_motive": {
+          "type": "string"
+        }
       }
     },
-
     "Fact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "value", "category", "visibility"],
+      "required": [
+        "id",
+        "value",
+        "category",
+        "visibility"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/FactId" },
-        "value": { "type": "string", "minLength": 1 },
-        "category": { "$ref": "#/$defs/FactCategory" },
-        "visibility": { "enum": ["public", "secret", "hidden"] }
+        "id": {
+          "$ref": "#/$defs/FactId"
+        },
+        "value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category": {
+          "$ref": "#/$defs/FactCategory"
+        },
+        "visibility": {
+          "enum": [
+            "public",
+            "secret",
+            "hidden"
+          ]
+        }
       }
     },
-
     "Knowledge": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["character_id", "fact_id"],
+      "required": [
+        "character_id",
+        "fact_id"
+      ],
       "properties": {
-        "character_id": { "$ref": "#/$defs/CharId" },
-        "fact_id": { "$ref": "#/$defs/FactId" },
-        "certainty": { "type": "number", "minimum": 0, "maximum": 1 },
-        "source": { "type": ["string", "null"] },
-        "can_disclose": { "type": ["boolean", "integer"], "enum": [true, false, 0, 1] }
+        "character_id": {
+          "$ref": "#/$defs/CharId"
+        },
+        "fact_id": {
+          "$ref": "#/$defs/FactId"
+        },
+        "certainty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "can_disclose": {
+          "type": [
+            "boolean",
+            "integer"
+          ],
+          "enum": [
+            true,
+            false,
+            0,
+            1
+          ]
+        }
       }
     },
-
     "Event": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "start"],
+      "required": [
+        "id",
+        "start"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/EventId" },
-        "start": { "type": "string", "minLength": 1 },
-        "end": { "type": ["string", "null"] },
-        "location_id": { "type": ["string", "null"] },
-        "title": { "type": ["string", "null"] },
-        "description": { "type": ["string", "null"] },
-        "actors": { "type": "array", "items": { "$ref": "#/$defs/CharId" } },
-        "causal_parent": { "type": ["string", "null"] },
-        "is_public": { "type": "boolean" }
+        "id": {
+          "$ref": "#/$defs/EventId"
+        },
+        "start": {
+          "type": "string",
+          "minLength": 1
+        },
+        "end": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "location_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actors": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/CharId"
+          }
+        },
+        "causal_parent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "is_public": {
+          "type": "boolean"
+        },
+        "revealed_by": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "Evidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "type", "title"],
+      "required": [
+        "id",
+        "type",
+        "title"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/EvidenceId" },
-        "type": { "$ref": "#/$defs/EvidenceType" },
-        "location_id": { "type": ["string", "null"] },
-        "title": { "type": "string", "minLength": 1 },
-        "description": { "type": ["string", "null"] },
-        "fact_links": { "type": "array", "items": { "$ref": "#/$defs/FactId" } },
-        "unlock_rules": { "type": "object" },
-        "meta": { "type": "object" }
+        "id": {
+          "$ref": "#/$defs/EvidenceId"
+        },
+        "type": {
+          "$ref": "#/$defs/EvidenceType"
+        },
+        "location_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fact_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/FactId"
+          }
+        },
+        "unlock_rules": {
+          "type": "object"
+        },
+        "meta": {
+          "type": "object"
+        }
       }
     },
-
     "Lie": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "character_id", "cover_story"],
+      "required": [
+        "id",
+        "character_id",
+        "cover_story"
+      ],
       "properties": {
-        "id": { "$ref": "#/$defs/LieId" },
-        "character_id": { "$ref": "#/$defs/CharId" },
-        "fact_id": { "type": ["string", "null"] },
-        "cover_story": { "type": "string", "minLength": 1 },
-        "triggers": { "type": "array", "items": { "$ref": "#/$defs/EvidenceId" } },
-        "break_conditions": { "type": "object" },
-        "active": { "type": "boolean" }
+        "id": {
+          "$ref": "#/$defs/LieId"
+        },
+        "character_id": {
+          "$ref": "#/$defs/CharId"
+        },
+        "fact_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cover_story": {
+          "type": "string",
+          "minLength": 1
+        },
+        "triggers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EvidenceId"
+          }
+        },
+        "break_conditions": {
+          "type": "object"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "unlocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
-
     "Relationship": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["source", "target", "type"],
+      "required": [
+        "source",
+        "target",
+        "type"
+      ],
       "properties": {
-        "source": { "$ref": "#/$defs/CharId" },
-        "target": { "$ref": "#/$defs/CharId" },
-        "type": { "type": "string", "minLength": 1 },
-        "strength": { "type": "number", "minimum": 0, "maximum": 1 }
+        "source": {
+          "$ref": "#/$defs/CharId"
+        },
+        "target": {
+          "$ref": "#/$defs/CharId"
+        },
+        "type": {
+          "type": "string",
+          "minLength": 1
+        },
+        "strength": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
       }
     },
-
-    "CharacterRole": { "enum": ["victim", "suspect", "witness"] },
-    "FactCategory": {
-      "enum": ["critical", "conclusion", "alibi", "forensic", "relationship", "access", "motive_support", "general"]
+    "CharacterRole": {
+      "enum": [
+        "victim",
+        "suspect",
+        "witness"
+      ]
     },
-    "EvidenceType": { "enum": ["physical", "document", "digital", "testimony", "audio"] }
+    "FactCategory": {
+      "enum": [
+        "critical",
+        "conclusion",
+        "alibi",
+        "forensic",
+        "relationship",
+        "access",
+        "motive_support",
+        "general"
+      ]
+    },
+    "EvidenceType": {
+      "enum": [
+        "physical",
+        "document",
+        "digital",
+        "testimony",
+        "audio"
+      ]
+    },
+    "RedHerring": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "suspicious_thing",
+        "truth",
+        "explanation"
+      ],
+      "properties": {
+        "suspicious_thing": {
+          "type": "string"
+        },
+        "truth": {
+          "type": "string"
+        },
+        "explanation": {
+          "type": "string"
+        }
+      }
+    },
+    "ClueLink": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clue",
+        "unlocks",
+        "note"
+      ],
+      "properties": {
+        "clue": {
+          "type": "string"
+        },
+        "unlocks": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      }
+    },
+    "Solution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "killer",
+        "motive",
+        "method",
+        "narrative"
+      ],
+      "properties": {
+        "killer": {
+          "type": "string"
+        },
+        "motive": {
+          "type": "string"
+        },
+        "method": {
+          "type": "string"
+        },
+        "narrative": {
+          "type": "string"
+        }
+      }
+    },
+    "KillerPovChapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "unlock_evidence_id",
+        "chapter_title",
+        "text"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "unlock_evidence_id": {
+          "$ref": "#/$defs/EvidenceId"
+        },
+        "chapter_title": {
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        }
+      }
+    }
   }
 }

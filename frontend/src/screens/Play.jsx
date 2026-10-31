@@ -34,25 +34,29 @@ export default function Play({ session, onExit }) {
 
   useEffect(() => {
     let mounted = true;
-    Promise.all([api.loadCase(caseId), api.inventory(sid)])
-      .then(([c, inv]) => {
+    api.loadCase(caseId, sid)
+      .then((c) => {
         if (!mounted) return;
-        setCaseData(c);
-        setInventory(inv.evidence);
-        const disc = {};
-        inv.evidence.forEach((e) => (disc[e.id] = true));
-        setDiscovered(disc);
+        applyCase(c);
       })
       .catch((e) => setError(e.message));
     return () => { mounted = false; };
   }, [caseId, sid]);
 
+  const applyCase = (c) => {
+    setCaseData(c);
+    const found = (c.evidence || []).filter((e) => e.discovered);
+    setInventory(found);
+    const disc = {};
+    found.forEach((e) => (disc[e.id] = true));
+    setDiscovered(disc);
+  };
+
   const discover = async (evidenceId) => {
     try {
-      await api.discover(sid, evidenceId);
-      setDiscovered((d) => ({ ...d, [evidenceId]: true }));
-      const inv = await api.inventory(sid);
-      setInventory(inv.evidence);
+      setError(null);
+      const r = await api.discover(sid, evidenceId);
+      applyCase(r.case);
     } catch (e) { setError(e.message); }
   };
 
@@ -71,7 +75,7 @@ export default function Play({ session, onExit }) {
   const viewIdx = Math.max(0, VIEWS.findIndex((v) => v.key === view));
 
   const renderView = () => {
-    const shared = { caseData, inventory, discovered, discover, suspects };
+    const shared = { caseData, inventory, discovered, discover, suspects, session };
     switch (view) {
       case 'briefing': return <Briefing {...shared} onContinue={async () => { try { await api.markBriefingSeen(sid); } catch (e) {} setView('scene'); }} />;
       case 'scene': return <Scene {...shared} evidenceById={evidenceById} />;
@@ -79,7 +83,7 @@ export default function Play({ session, onExit }) {
       case 'timeline': return <Timeline {...shared} />;
       case 'suspects': return <Suspects {...shared} onInterview={(cid) => { setInterviewTarget(cid); setView('interview'); }} />;
       case 'interview': return <Interview {...shared} sessionId={sid} initialSelected={interviewTarget} />;
-      case 'accuse': return <Accusation {...shared} sessionId={sid} onResult={(r) => { setResult(r); setView('debrief'); }} />;
+      case 'accuse': return <Accusation {...shared} sessionId={sid} onResult={(r) => { setResult(r); if (r.closed) setView('debrief'); }} />;
       case 'debrief': return <Debrief {...shared} result={result} onExit={onExit} />;
       default: return null;
     }
@@ -114,7 +118,7 @@ export default function Play({ session, onExit }) {
                 {v.label}
                 {v.key === 'scene' && <span className="count">{inventory.length}</span>}
                 {v.key === 'suspects' && <span className="count">{suspects.filter((s) => s.role === 'suspect').length}</span>}
-                {v.key === 'debrief' && result && <span className="count" style={{ background: 'rgba(74,222,128,0.2)', color: 'var(--good)' }}>{result.score}</span>}
+                {v.key === 'debrief' && result && <span className="count" style={{ background: 'rgba(74,222,128,0.2)', color: 'var(--good)' }}>{result.closed ? result.score : ''}</span>}
               </button>
             ))}
             <div className="muted" style={{ fontSize: 11.5, marginTop: 14, padding: '0 8px' }}>
