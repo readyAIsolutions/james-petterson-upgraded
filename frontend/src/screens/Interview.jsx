@@ -10,7 +10,7 @@ const moodOf = (e) => {
   return 'guarded';
 };
 
-export default function Interview({ suspects, sessionId, inventory, evidenceById, initialSelected = null, session }) {
+export default function Interview({ suspects, sessionId, inventory, evidenceById, initialSelected = null, session, onInterviewed }) {
   const [selected, setSelected] = useState(initialSelected || suspects[0]?.id || null);
   const [question, setQuestion] = useState('');
   const [chosenEvidence, setChosenEvidence] = useState([]);
@@ -73,6 +73,7 @@ export default function Interview({ suspects, sessionId, inventory, evidenceById
           offline: res.ai_offline,
         }]);
         setTyping(false); setChosenEvidence([]);
+        if (onInterviewed) onInterviewed();
       }, 500);
     } catch (e) {
       setError(e.message); setTyping(false);

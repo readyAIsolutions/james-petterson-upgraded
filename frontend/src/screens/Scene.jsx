@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
+import Closeup from './Closeup';
 
 const LOC_ICONS = { loc_workshop: '⚙️', loc_parlor: '🛋️', loc_kitchen: '🍵', loc_shopfront: '🛍️', other: '📍' };
 const TYPE_ICON = { physical: '🧪', document: '📄', media: '📼', weapon: '🗡️', location: '📍', event: '⏱️', digital: '💾', audio: '🎧', testimony: '🗣️', other: '📦' };
 
-export default function Scene({ caseData, discovered, discover }) {
+export default function Scene({ caseData, discovered, discover, session }) {
+  const [toast, setToast] = useState(null);
+  const [closeup, setCloseup] = useState(null);
   const [openItem, setOpenItem] = useState(null);
   const [collectAnim, setCollectAnim] = useState(null);
 
@@ -20,14 +23,23 @@ export default function Scene({ caseData, discovered, discover }) {
   const povLockedCount = caseData.killer_pov_locked || 0;
 
   const handleCollect = async (ev) => {
+    if (discovered[ev.id]) return; // no duplicate collection
     setCollectAnim(ev.id);
-    setOpenItem(ev.id);
-    await discover(ev.id);
-    setTimeout(() => setCollectAnim(null), 600);
+    const before = Object.keys(discovered).length;
+    const full = await discover(ev.id);
+    setCollectAnim(null);
+    if (full) {
+      const got = (full.evidence || []).find((e) => e.id === ev.id);
+      setToast(`Added to your Evidence Bag (${before + 1} collected)`);
+      setTimeout(() => setToast(null), 2600);
+      if (got) setCloseup(got);
+    }
   };
 
   return (
     <div>
+      {toast && <div className="toast">{toast}</div>}
+      <Closeup ev={closeup} sessionId={session?.id} onClose={() => setCloseup(null)} />
       <div className="row spread" style={{ marginBottom: 12 }}>
         <div>
           <h2 style={{ margin: 0 }}>The Scene</h2>
@@ -103,16 +115,17 @@ export default function Scene({ caseData, discovered, discover }) {
                       <div style={{ fontWeight: 700, marginTop: 3 }}>{isDiscovered ? ev.title : 'Something here is worth a closer look'}</div>
                     </div>
                     {!isDiscovered ? (
-                      <button className="btn violet collect-btn" onClick={(e) => { e.stopPropagation(); handleCollect(ev); }}>
-                        {collectAnim === ev.id ? '✓' : '+'}
+                      <button className="btn violet collect-btn" style={{ width: 'auto', padding: '6px 14px' }} onClick={(e) => { e.stopPropagation(); handleCollect(ev); }}>
+                        {collectAnim === ev.id ? 'Collecting…' : '+ Collect Evidence'}
                       </button>
                     ) : (
-                      <span className="collect-check" style={{ fontSize: 22, color: 'var(--good)' }}>✓</span>
+                      <span className="good" style={{ fontSize: 13, fontWeight: 700 }}>✓ In your bag</span>
                     )}
                   </div>
                   {isDiscovered && (
                     <div className="desc-wrap">
                       <div className="muted" style={{ fontSize: 13.5, marginTop: 8 }}>{ev.description}</div>
+                      <button className="btn small ghost" style={{ marginTop: 8 }} onClick={(e) => { e.stopPropagation(); setCloseup(ev); }}>🔍 Close-up &amp; theory</button>
                     </div>
                   )}
                 </div>

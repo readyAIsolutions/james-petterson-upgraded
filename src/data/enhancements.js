@@ -12,6 +12,7 @@
  *   killer_pov      anonymised killer chapters (no gender / name / job leaks)
  *   locations       neutralised descriptions that used to point at hidden clues
  */
+const S = require('./stories');
 const E = {
   'case-100': {
     detective_stake: 'Your brother Marcus has fallen asleep to Ray Mercer\'s voice every night for ten years. He called you at 00:20: "Ray just said the same sentence twice." The department wants this filed as natural causes by morning. Marcus wants the truth. So do you.',
@@ -71,7 +72,8 @@ const E = {
   'case-102': {
     detective_stake: 'Your partner of nine years retires at dawn. Close this before the train reaches Ironwood and he leaves with a win. Miss it, and the file follows you both for the rest of your lives.',
     gating: {
-      ev_motionlog: ['ev_logbook'], ev_masterkey: ['ev_steward_ticket'], ev_coat: ['ev_steward_ticket'],
+      ev_motionlog: ['ev_logbook'], ev_steward_ticket: ['ev_logbook'], ev_brandyglass: ['ev_steward_ticket'],
+      ev_masterkey: ['ev_steward_ticket'], ev_coat: ['ev_steward_ticket'],
       ev_vial: ['ev_brandyglass'], ev_chainlatch: ['ev_brandyglass'], ev_folder: ['ev_masterkey'],
     },
     reveals: {
@@ -99,6 +101,7 @@ const E = {
     gating: {
       ev_genfilter: ['ev_baro'], ev_chainannex: ['ev_baro'], ev_annexmat: ['ev_chainannex'],
       ev_boots: ['ev_annexmat'], ev_ledger2: ['ev_genfilter'], ev_marian_statement: ['ev_photo'],
+      ev_poker: ['ev_baro'], ev_photo: ['ev_file'],
     },
     reveals: {
       evt_dinner: ['ev_ledger2'], evt_office: ['ev_ledger2'], evt_drift: [], evt_row: [], evt_shovel: ['ev_gear'],
@@ -223,9 +226,16 @@ const PROOF = {
 };
 
 function enhance(id, manifest) {
-  const e = E[id];
-  if (!e) return manifest;
+  let e = E[id];
   const m = JSON.parse(JSON.stringify(manifest));
+  if (!e) {
+    if (id === 'case-001') {
+      const T = S.TUTORIAL;
+      Object.assign(m, { epigraph: T.epigraph, opening_scene: T.opening_scene, detective_stake: T.detective_stake, chapter_breaks: T.chapter_breaks, hints: T.hints, proof: T.proof });
+      for (const c of m.characters) if (T.public_motive[c.id]) c.public_motive = T.public_motive[c.id];
+    }
+    return finishStory(id, m);
+  }
   m.detective_stake = e.detective_stake;
   m.chapter_breaks = e.chapter_breaks;
   m.proof = PROOF[id] || [];
@@ -241,6 +251,14 @@ function enhance(id, manifest) {
   for (const c of m.characters) if (SUSPICION[c.id]) c.public_motive = SUSPICION[c.id];
   for (const l of m.lies) if (LIE_UNLOCKS[l.id]) l.unlocks = LIE_UNLOCKS[l.id];
   for (const [cid, fid] of LOCKED) for (const k of m.knowledge) if (k.character_id === cid && k.fact_id === fid) k.can_disclose = 0;
+  return finishStory(id, m);
+}
+
+function finishStory(id, m) {
+  if (S.DIFFICULTY[id]) m.difficulty = S.DIFFICULTY[id];
+  m.victim_chapters = S.VICTIM[id] || [];
+  m.open_questions = require('./questions')[id] || [];
+  for (const c of m.characters) if (S.BACKSTORY[c.id]) c.public_chapter = S.BACKSTORY[c.id];
   return m;
 }
 

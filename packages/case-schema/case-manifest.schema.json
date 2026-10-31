@@ -212,6 +212,51 @@
           }
         }
       }
+    },
+    "victim_chapters": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "at",
+          "title",
+          "text"
+        ],
+        "properties": {
+          "at": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "q",
+          "answered_by"
+        ],
+        "properties": {
+          "q": {
+            "type": "string"
+          },
+          "answered_by": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   },
   "$defs": {
@@ -395,6 +440,9 @@
           }
         },
         "public_motive": {
+          "type": "string"
+        },
+        "public_chapter": {
           "type": "string"
         }
       }

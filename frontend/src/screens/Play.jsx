@@ -8,10 +8,12 @@ import Suspects from './Suspects';
 import Interview from './Interview';
 import Accusation from './Accusation';
 import Debrief from './Debrief';
+import CaseFile from './CaseFile';
 
 const VIEWS = [
   { key: 'briefing', label: 'Briefing', icon: '📜' },
   { key: 'scene', label: 'The Scene', icon: '🔍' },
+  { key: 'casefile', label: 'Case File', icon: '🎒' },
   { key: 'board', label: 'Evidence Board', icon: '🗂️' },
   { key: 'timeline', label: 'Timeline', icon: '🕰️' },
   { key: 'suspects', label: 'Suspects', icon: '👥' },
@@ -57,7 +59,8 @@ export default function Play({ session, onExit }) {
       setError(null);
       const r = await api.discover(sid, evidenceId);
       applyCase(r.case);
-    } catch (e) { setError(e.message); }
+      return r.case;
+    } catch (e) { setError(e.message); return null; }
   };
 
   const evidenceById = useMemo(() => {
@@ -79,10 +82,11 @@ export default function Play({ session, onExit }) {
     switch (view) {
       case 'briefing': return <Briefing {...shared} onContinue={async () => { try { await api.markBriefingSeen(sid); } catch (e) {} setView('scene'); }} />;
       case 'scene': return <Scene {...shared} evidenceById={evidenceById} />;
+      case 'casefile': return <CaseFile {...shared} onInterview={(cid) => { setInterviewTarget(cid); setView('interview'); }} />;
       case 'board': return <Board {...shared} evidenceById={evidenceById} />;
       case 'timeline': return <Timeline {...shared} />;
       case 'suspects': return <Suspects {...shared} onInterview={(cid) => { setInterviewTarget(cid); setView('interview'); }} />;
-      case 'interview': return <Interview {...shared} sessionId={sid} initialSelected={interviewTarget} />;
+      case 'interview': return <Interview {...shared} sessionId={sid} initialSelected={interviewTarget} onInterviewed={() => api.loadCase(caseId, sid).then(applyCase).catch(() => {})} />;
       case 'accuse': return <Accusation {...shared} sessionId={sid} onResult={(r) => { setResult(r); if (r.closed) setView('debrief'); }} />;
       case 'debrief': return <Debrief {...shared} result={result} onExit={onExit} />;
       default: return null;

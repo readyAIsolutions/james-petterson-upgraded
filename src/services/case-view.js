@@ -44,11 +44,14 @@ function chapterBreaksUnlocked(manifest, discoveredCount) {
 function publicView(caseId, manifest, session) {
   const discovered = new Set((session && session.discoveredEvidence) || []);
   const seen = !!(session && session.briefing && session.briefing.seen);
+  const interviewed = new Set(Object.entries((session && session.interviews) || {}).filter(([, v]) => v && v.met > 0).map(([k]) => k));
 
   const characters = (manifest.characters || []).map((c) => ({
     id: c.id, name: c.name, role: c.role,
     public_profile: c.public_profile || null,
-    motive: c.public_motive || null,               // the PUBLIC reason they are a suspect
+    motive: c.public_motive || null,
+    chapter: interviewed.has(c.id) ? (c.public_chapter || null) : null,
+    chapter_locked: !interviewed.has(c.id) && !!c.public_chapter,               // the PUBLIC reason they are a suspect
     voice: c.voice && typeof c.voice === 'object' ? { style: c.voice.style } : undefined,
   }));
 
@@ -91,6 +94,9 @@ function publicView(caseId, manifest, session) {
     killer_pov: pov,
     killer_pov_locked: povLocked,
     chapter_breaks: chapterBreaksUnlocked(manifest, discovered.size),
+    victim_chapters: (manifest.victim_chapters || []).filter((c) => discovered.size >= c.at),
+    victim_chapters_locked: (manifest.victim_chapters || []).filter((c) => discovered.size < c.at).length,
+    open_questions: (manifest.open_questions || []).map((o) => ({ q: o.q, answered: o.answered_by.some((id) => discovered.has(id)) })),
   };
 }
 
