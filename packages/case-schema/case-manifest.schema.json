@@ -329,6 +329,10 @@
         "description": {
           "type": "string"
         },
+        "image": {
+          "type": "string",
+          "description": "Optional relative path or URL of an illustration for this location."
+        },
         "meta": {
           "type": "object"
         }
@@ -356,6 +360,10 @@
         },
         "role": {
           "$ref": "#/$defs/CharacterRole"
+        },
+        "image": {
+          "type": "string",
+          "description": "Optional relative path or URL of an illustration for this character."
         },
         "motive": {
           "type": [

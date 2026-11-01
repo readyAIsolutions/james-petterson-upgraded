@@ -24,16 +24,16 @@ const manifest = {
   },
   culprit_id: 'char_marina',
   locations: [
-    { id: 'loc_workshop', name: 'Victor\'s Workshop', description: 'A dusty room of clocks and gears. A tea cup sits on the workbench.' },
-    { id: 'loc_parlor', name: 'The Parlor', description: 'The Hartley home reception room.' },
-    { id: 'loc_kitchen', name: 'The Kitchen', description: 'Where the tea was brewed.' },
-    { id: 'loc_shopfront', name: 'The Shop Front', description: 'Public facing clock shop.' },
+    { id: 'loc_workshop', name: 'Victor\'s Workshop', description: 'A dusty room of clocks and gears. A tea cup sits on the workbench.', image: '/img/case-001/scene.png' },
+    { id: 'loc_parlor', name: 'The Parlor', description: 'The Hartley home reception room.', image: '/img/case-001/scene.png' },
+    { id: 'loc_kitchen', name: 'The Kitchen', description: 'Where the tea was brewed.', image: '/img/case-001/scene.png' },
+    { id: 'loc_shopfront', name: 'The Shop Front', description: 'Public facing clock shop.', image: '/img/case-001/scene.png' },
   ],
   characters: [
-    { id: 'char_victor', name: 'Victor Hartley', role: 'victim', is_culprit: false, motive: null, traits: { stubborn: true, meticulous: true }, public_profile: 'The deceased clockmaker.' },
-    { id: 'char_elias', name: 'Elias Hartley', role: 'suspect', is_culprit: false, motive: 'Inheritance — he stands to gain the workshop and fortune.', traits: { impatient: true, entitled: true }, public_profile: 'The nephew and heir.' },
-    { id: 'char_marina', name: 'Marina Cole', role: 'suspect', is_culprit: true, motive: 'Victor planned to sell the workshop, destroying her apprenticeship and their affair.', traits: { devoted: true, desperate: true }, public_profile: 'The assistant and secret lover.' },
-    { id: 'char_silas', name: 'Silas Vane', role: 'suspect', is_culprit: false, motive: 'Victor owed him a large sum for a stolen original.', traits: { calculating: true, debt_collector: true }, public_profile: 'A rival clock dealer.' },
+    { id: 'char_victor', name: 'Victor Hartley', role: 'victim', is_culprit: false, motive: null, traits: { stubborn: true, meticulous: true }, public_profile: 'The deceased clockmaker.', image: '/img/case-001/victor.png' },
+    { id: 'char_elias', name: 'Elias Hartley', role: 'suspect', is_culprit: false, motive: 'Inheritance — he stands to gain the workshop and fortune.', traits: { impatient: true, entitled: true }, public_profile: 'The nephew and heir.', image: '/img/case-001/elias.png' },
+    { id: 'char_marina', name: 'Marina Cole', role: 'suspect', is_culprit: true, motive: 'Victor planned to sell the workshop, destroying her apprenticeship and their affair.', traits: { devoted: true, desperate: true }, public_profile: 'The assistant and secret lover.', image: '/img/case-001/marina.png' },
+    { id: 'char_silas', name: 'Silas Vane', role: 'suspect', is_culprit: false, motive: 'Victor owed him a large sum for a stolen original.', traits: { calculating: true, debt_collector: true }, public_profile: 'A rival clock dealer.', image: '/img/case-001/silas.png' },
   ],
   facts: [
     // CRITICAL clue facts: the player MUST find these in the world
